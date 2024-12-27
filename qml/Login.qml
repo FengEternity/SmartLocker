@@ -10,19 +10,31 @@ Item {
 
         TextField {
             id: usernameInput
+            width: 215
             placeholderText: "账号"
         }
 
         TextField {
             id: passwordInput
+            width: 215
             placeholderText: "密码"
             echoMode: TextInput.Password
         }
 
-        Button {
-            text: "登陆"
-            onClicked: {
-                loginManager.attemptLogin(usernameInput.text, passwordInput.text)
+        Row {
+            spacing: 10 // 按钮之间的间距
+
+            Button {
+                text: "登陆"
+                width: 100 // 设置按钮宽度
+                onClicked: {
+                    loginManager.attemptLogin(usernameInput.text, passwordInput.text)
+                }
+            }
+
+            Button {
+                text: "注册"
+                width: 100 // 设置按钮宽度
             }
         }
     }
