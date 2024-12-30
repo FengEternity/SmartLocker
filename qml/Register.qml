@@ -29,6 +29,13 @@ Item {
             id: newUsernameInput
             width: 210
             placeholderText: "新账号"
+            onTextChanged: {
+                if (!/^\d{11}$/.test(newUsernameInput.text)) {
+                    newUsernameInput.color = "red"
+                } else {
+                    newUsernameInput.color = "black"
+                }
+            }
         }
 
         TextField {
@@ -48,6 +55,13 @@ Item {
                     var username = newUsernameInput.text;
                     var password = newPasswordInput.text;
                     var role = statusComboBox.getSelectedRole();
+
+                    // 检查输入是否合法
+                    if (!/^\d{11}$/.test(username)) {
+                        console.log("Invalid username");
+                        registerFailedDialog.open();
+                        return;
+                    }
 
                     // 调用注册方法
                     var registerSuccess = userManager.registerUser(username, password, role);
@@ -87,7 +101,6 @@ Item {
         }
     }
 
-
     Dialog {
         id: registerFailedDialog
         title: "注册失败"
@@ -99,7 +112,7 @@ Item {
             color: "white"
         }
         standardButtons: Dialog.Ok
-        onAccepted: loginFailedDialog.close()
+        onAccepted: registerFailedDialog.close()
     }
 
     Dialog {

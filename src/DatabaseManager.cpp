@@ -30,12 +30,21 @@ void DatabaseManager::initializeDatabase() {
     }
 
     // 插入默认用户数据
-    insertUser("admin", "admin123", "admin");
-    insertUser("user", "user123", "user");
-    insertUser("guest", "guest123", "guest");
+    insertUser("11111111111", "admin", "admin");
+    insertUser("12222222222", "user", "user");
+    insertUser("13333333333", "guest", "guest");
 }
 
+#include <QRegularExpression>
+
 bool DatabaseManager::insertUser(const QString& username, const QString& password, const QString& role) {
+    // Check if the username is an 11-digit phone number
+    QRegularExpression phoneRegex("^\\d{11}$");
+    if (!phoneRegex.match(username).hasMatch()) {
+        qDebug() << "Username must be an 11-digit phone number.";
+        return false;
+    }
+
     if (userExists(username)) return false;
 
     QSqlQuery query;
