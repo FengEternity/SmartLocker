@@ -11,7 +11,7 @@ public:
     explicit LoginManager(const QString& dbPath, QObject *parent = nullptr);
 
     signals:
-        void loginSuccessful();
+        void loginSuccessful(const QString& role);
         void loginFailed();
 
     public slots:

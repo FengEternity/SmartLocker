@@ -8,29 +8,58 @@ ApplicationWindow {
     height: 480
     title: "Smart Locker System"
 
-    // 设置全局主题和调色板
     Material.theme: Material.Dark
-    Material.primary: "#6200EE" // 主色
-    Material.accent: "#03DAC5"  // 辅助色
-
+    Material.primary: "#6200EE"
+    Material.accent: "#03DAC5"
 
     StackView {
         id: stackView
         anchors.fill: parent
 
         initialItem: Login {
-            onLoginSuccessful: {
-                stackView.pop()
-                stackView.push(mainPage)
+            onLoginSuccessful: function(role) {
+                console.log("登录成功，身份是：" + role);
+
+                var pageComponent;
+                switch (role) {
+                    case "user":
+                        pageComponent = courierPage;
+                        break;
+                    case "admin":
+                        pageComponent = adminPage;
+                        break;
+                    case "guest":
+                        pageComponent = guestPage;
+                        break;
+                    default:
+                        pageComponent = mainPage;
+                        break;
+                }
+
+                stackView.pop();
+                stackView.push(pageComponent);
             }
         }
     }
 
     Component {
-        id: mainPage
+        id: courierPage
+        CourierPage {} // 快递员页面的 QML 组件
+    }
 
+    Component {
+        id: adminPage
+        AdminPage {} // 管理员页面的 QML 组件
+    }
+
+    Component {
+        id: guestPage
+        GuestPage {} // 取件人页面的 QML 组件
+    }
+
+    Component {
+        id: mainPage
         Item {
-            // Main page content
             Text {
                 text: "欢迎进入 Smart Locker System！"
                 anchors.centerIn: parent

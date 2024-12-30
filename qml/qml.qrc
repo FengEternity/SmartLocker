@@ -2,8 +2,9 @@
     <qresource prefix="/">
         <file>Main.qml</file>
         <file>Login.qml</file>
-        <file>UserDashboard.qml</file>
-        <file>AdminPanel.qml</file>
         <file>Register.qml</file>
+        <file>CourierPage.qml</file>
+        <file>AdminPage.qml</file>
+        <file>GuestPage.qml</file>
     </qresource>
 </RCC>
