@@ -12,6 +12,17 @@ Item {
             id: statusComboBox
             width: 210
             model: ["快递员", "管理员", "取件人"]
+
+            // 角色映射
+            property var roleMap: {
+                "快递员": "user",
+                "管理员": "admin",
+                "取件人": "guest"
+            }
+
+            function getSelectedRole() {
+                return roleMap[currentText];
+            }
         }
 
         TextField {
@@ -28,19 +39,24 @@ Item {
         }
 
         Row {
-            spacing: 10 // 按钮之间的间距
+            spacing: 10
 
             Button {
                 text: "登陆"
-                width: 100 // 设置按钮宽度
+                width: 100
                 onClicked: {
-                    loginManager.attemptLogin(usernameInput.text, passwordInput.text)
+                    loginManager.attemptLogin(
+                        usernameInput.text,
+                        passwordInput.text,
+                        statusComboBox.getSelectedRole()
+                    )
                 }
             }
 
             Button {
                 text: "注册"
-                width: 100 // 设置按钮宽度
+                width: 100
+
             }
         }
     }
@@ -60,11 +76,12 @@ Item {
         title: "登录失败"
         width: 256
         height: 128
+        anchors.centerIn: parent
         contentItem: Text {
             text: "登陆失败，请重试！"
             color: "white"
         }
         standardButtons: Dialog.Ok
-        anchors.centerIn: parent
+        onAccepted: loginFailedDialog.close()
     }
 }

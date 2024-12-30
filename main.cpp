@@ -2,13 +2,18 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include "src/LoginManager.h"
+#include "src/DatabaseManager.h"
 
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
 
     QQmlApplicationEngine engine;
-    LoginManager loginManager;
+
+
+
+    QString dbPath = "./database.sqlite";
+    LoginManager loginManager(dbPath);
 
     // Register LoginManager with QML
     engine.rootContext()->setContextProperty("loginManager", &loginManager);
