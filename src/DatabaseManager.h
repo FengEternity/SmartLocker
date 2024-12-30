@@ -9,11 +9,12 @@ class DatabaseManager {
 public:
     explicit DatabaseManager(const QString& path);
     bool verifyCredentials(const QString& username, const QString& password, const QString& role);
+    bool insertUser(const QString& username, const QString& password, const QString& role);
     void initializeDatabase();
+    bool userExists(const QString& username);
 
 private:
     QSqlDatabase db;
-    void insertUser(const QString& username, const QString& password, const QString& role);
 };
 
 #endif // DATABASEMANAGER_H

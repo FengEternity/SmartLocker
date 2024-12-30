@@ -35,7 +35,9 @@ void DatabaseManager::initializeDatabase() {
     insertUser("guest", "guest123", "guest");
 }
 
-void DatabaseManager::insertUser(const QString& username, const QString& password, const QString& role) {
+bool DatabaseManager::insertUser(const QString& username, const QString& password, const QString& role) {
+    if (userExists(username)) return false;
+
     QSqlQuery query;
     query.prepare("INSERT INTO users (username, password, role) VALUES (?, ?, ?)");
     query.addBindValue(username);
@@ -43,8 +45,10 @@ void DatabaseManager::insertUser(const QString& username, const QString& passwor
     query.addBindValue(role);
     if (!query.exec()) {
         qDebug() << "Failed to insert user:" << query.lastError().text();
+        return false;
     }
     qInfo() << "Inserting user:" << username << ":" << password;
+    return true;
 }
 
 bool DatabaseManager::verifyCredentials(const QString& username, const QString& password, const QString& role) {
@@ -56,5 +60,18 @@ bool DatabaseManager::verifyCredentials(const QString& username, const QString& 
     if (query.exec() && query.next()) {
         return true;
     }
+    return false;
+}
+
+// 检查用户是否存在
+bool DatabaseManager::userExists(const QString& username) {
+    QSqlQuery query;
+    query.prepare("SELECT COUNT(*) FROM users WHERE username = :username");
+    query.bindValue(":username", username);
+
+    if (query.exec() && query.next()) {
+        return query.value(0).toInt() > 0;
+    }
+
     return false;
 }

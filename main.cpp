@@ -3,6 +3,7 @@
 #include <QQmlContext>
 #include "src/LoginManager.h"
 #include "src/DatabaseManager.h"
+#include "src/UserManager.h"
 
 int main(int argc, char *argv[])
 {
@@ -14,6 +15,10 @@ int main(int argc, char *argv[])
 
     QString dbPath = "./database.sqlite";
     LoginManager loginManager(dbPath);
+    UserManager userManager(dbPath);
+
+    engine.rootContext()->setContextProperty("userManager", &userManager);
+
 
     // Register LoginManager with QML
     engine.rootContext()->setContextProperty("loginManager", &loginManager);

@@ -8,6 +8,23 @@ Item {
         spacing: 10
         anchors.centerIn: parent
 
+        ComboBox {
+            id: statusComboBox
+            width: 210
+            model: ["快递员", "管理员", "取件人"]
+
+            // 角色映射
+            property var roleMap: {
+                "快递员": "user",
+                "管理员": "admin",
+                "取件人": "guest"
+            }
+
+            function getSelectedRole() {
+                return roleMap[currentText];
+            }
+        }
+
         TextField {
             id: newUsernameInput
             width: 210
@@ -28,8 +45,23 @@ Item {
                 text: "注册"
                 width: 100
                 onClicked: {
-                    // 在这里处理注册逻辑
-                    console.log("注册新用户:", newUsernameInput.text)
+                    var username = newUsernameInput.text;
+                    var password = newPasswordInput.text;
+                    var role = statusComboBox.getSelectedRole();
+
+                    // 调用注册方法
+                    var registerSuccess = userManager.registerUser(username, password, role);
+
+                    if (registerSuccess) {
+                        console.log("Registration successful");
+                        registerSucessDialog.open()
+                        newPasswordInput.text = ""
+                        newUsernameInput.text = ""
+                        // backToLogin();
+                    } else {
+                        console.log("Registration failed");
+                        registerFailedDialog.open()
+                    }
                 }
             }
 
@@ -37,10 +69,46 @@ Item {
                 text: "返回"
                 width: 100
                 onClicked: {
-                    // 发出信号返回登录界面
                     backToLogin()
                 }
             }
         }
+    }
+
+    Connections {
+        target: userManager
+        onRegisterTrue: {
+            console.log("Registration successful")
+            registerSucessDialog.open()
+            // backToLogin()
+        }
+        onRegisterFalse: {
+            console.log("Registration failed")
+        }
+    }
+
+
+    Dialog {
+        id: registerFailedDialog
+        title: "注册失败"
+        width: 256
+        height: 128
+        anchors.centerIn: parent
+        contentItem: Text {
+            text: "注册失败，请重试！"
+            color: "white"
+        }
+        standardButtons: Dialog.Ok
+        onAccepted: loginFailedDialog.close()
+    }
+
+    Dialog {
+        id: registerSucessDialog
+        title: "注册成功！"
+        width: 256
+        height: 128
+        anchors.centerIn: parent
+        standardButtons: Dialog.Ok
+        onAccepted: registerSucessDialog.close()
     }
 }
