@@ -4,9 +4,22 @@ import QtQuick.Controls 2.15
 Item {
     signal loginSuccessful()
 
+    Loader {
+        id: pageLoader
+        anchors.fill: parent
+        onLoaded: {
+            if (item) {
+                item.backToLogin.connect(function() {
+                    pageLoader.source = ""
+                })
+            }
+        }
+    }
+
     Column {
         spacing: 10
         anchors.centerIn: parent
+        visible: pageLoader.status === Loader.Null
 
         ComboBox {
             id: statusComboBox
@@ -56,7 +69,9 @@ Item {
             Button {
                 text: "注册"
                 width: 100
-
+                onClicked: {
+                    pageLoader.source = "Register.qml"
+                }
             }
         }
     }
