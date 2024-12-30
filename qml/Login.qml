@@ -8,15 +8,21 @@ Item {
         spacing: 10
         anchors.centerIn: parent
 
+        ComboBox {
+            id: statusComboBox
+            width: 210
+            model: ["快递员", "管理员", "取件人"]
+        }
+
         TextField {
             id: usernameInput
-            width: 215
+            width: 210
             placeholderText: "账号"
         }
 
         TextField {
             id: passwordInput
-            width: 215
+            width: 210
             placeholderText: "密码"
             echoMode: TextInput.Password
         }
@@ -45,7 +51,20 @@ Item {
         onLoginFailed: {
             usernameInput.text = ""
             passwordInput.text = ""
-            console.log("登陆失败，请重试！")
+            loginFailedDialog.open()
         }
+    }
+
+    Dialog {
+        id: loginFailedDialog
+        title: "登录失败"
+        width: 256
+        height: 128
+        contentItem: Text {
+            text: "登陆失败，请重试！"
+            color: "white"
+        }
+        standardButtons: Dialog.Ok
+        anchors.centerIn: parent
     }
 }
