@@ -11,8 +11,6 @@ int main(int argc, char *argv[])
 
     QQmlApplicationEngine engine;
 
-
-
     QString dbPath = "./database.sqlite";
     LoginManager loginManager(dbPath);
     UserManager userManager(dbPath);
