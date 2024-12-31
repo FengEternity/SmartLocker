@@ -15,9 +15,9 @@ Item {
 
             // 角色映射
             property var roleMap: {
-                "快递员": "user",
+                "快递员": "deliver",
                 "管理员": "admin",
-                "取件人": "guest"
+                "取件人": "user"
             }
 
             function getSelectedRole() {

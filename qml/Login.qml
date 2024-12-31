@@ -2,7 +2,7 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 
 Item {
-    signal loginSuccessful()
+    signal loginSuccessful(string role) // 登录成功信号，传递用户角色
 
     Loader {
         id: pageLoader
@@ -22,15 +22,15 @@ Item {
         visible: pageLoader.status === Loader.Null
 
         ComboBox {
-            id: statusComboBox
+            id: roleComboBox
             width: 210
             model: ["快递员", "管理员", "取件人"]
 
-            // 角色映射
+            // 映射角色
             property var roleMap: {
-                "快递员": "user",
+                "快递员": "deliver",
                 "管理员": "admin",
-                "取件人": "guest"
+                "取件人": "user"
             }
 
             function getSelectedRole() {
@@ -55,14 +55,15 @@ Item {
             spacing: 10
 
             Button {
-                text: "登陆"
+                text: "登录"
                 width: 100
                 onClicked: {
-                    loginManager.attemptLogin(
-                        usernameInput.text,
-                        passwordInput.text,
-                        statusComboBox.getSelectedRole()
-                    )
+                    // 模拟身份校验，登录成功后传递角色信息
+                    if (usernameInput.text !== "" && passwordInput.text !== "") {
+                        loginSuccessful(roleComboBox.getSelectedRole())
+                    } else {
+                        loginFailedDialog.open()
+                    }
                 }
             }
 
@@ -76,16 +77,6 @@ Item {
         }
     }
 
-    Connections {
-        target: loginManager
-        onLoginSuccessful: loginSuccessful()
-        onLoginFailed: {
-            usernameInput.text = ""
-            passwordInput.text = ""
-            loginFailedDialog.open()
-        }
-    }
-
     Dialog {
         id: loginFailedDialog
         title: "登录失败"
@@ -93,7 +84,7 @@ Item {
         height: 128
         anchors.centerIn: parent
         contentItem: Text {
-            text: "登陆失败，请重试！"
+            text: "账号或密码错误，请重试！"
             color: "white"
         }
         standardButtons: Dialog.Ok

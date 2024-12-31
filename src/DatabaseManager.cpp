@@ -3,6 +3,7 @@
 #include <QSqlError>
 #include <QFile>
 #include <QDebug>
+#include <QRegularExpression>
 
 DatabaseManager::DatabaseManager(const QString& path) {
     db = QSqlDatabase::addDatabase("QSQLITE");
@@ -31,11 +32,10 @@ void DatabaseManager::initializeDatabase() {
 
     // 插入默认用户数据
     insertUser("11111111111", "admin", "admin");
-    insertUser("12222222222", "user", "user");
-    insertUser("13333333333", "guest", "guest");
+    insertUser("12222222222", "user", "deliver");
+    insertUser("13333333333", "guest", "user");
 }
 
-#include <QRegularExpression>
 
 bool DatabaseManager::insertUser(const QString& username, const QString& password, const QString& role) {
     // Check if the username is an 11-digit phone number
