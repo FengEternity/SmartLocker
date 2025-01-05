@@ -3,6 +3,8 @@ import QtQuick.Controls 2.15
 import QtQuick.Controls.Material 2.15
 import QtQuick.Layouts 1.15
 
+pragma ComponentBehavior: Bound
+
 ApplicationWindow {
     visible: true
     width: 800
@@ -10,8 +12,8 @@ ApplicationWindow {
     title: "智能快递柜系统"
 
     Material.theme: Material.Light
-    Material.primary: "#6200EE"
-    Material.accent: "#03DAC5"
+    Material.primary: "#C6E092"
+    Material.accent: "#F7F7D2"
 
     StackView {
         id: stackView
@@ -19,7 +21,7 @@ ApplicationWindow {
 
         initialItem: Login {
             onLoginSuccessful: function(role) {
-                if (role === "deliveryWorker") {
+                if (role === "deliver") {
                     stackView.push(deliveryWorkerPage)
                 } else if (role === "admin") {
                     stackView.push(adminPage)
@@ -32,30 +34,176 @@ ApplicationWindow {
 
     Component {
         id: deliveryWorkerPage
-        Item {
-            Column {
-                spacing: 10
-                anchors.centerIn: parent
+        Page {
+            header: ToolBar {
+                RowLayout {
+                    anchors.fill: parent
+                    Label {
+                        text: "快递员主页"
+                        font.pixelSize: 20
+                        Layout.fillWidth: true
+                        horizontalAlignment: Qt.AlignHCenter
+                    }
+                    ToolButton {
+                        text: qsTr("退出")
+                        onClicked: stackView.pop()
+                    }
+                }
+            }
 
-                Text {
-                    text: "快递员主页"
-                    font.pixelSize: 24
-                    horizontalAlignment: Text.AlignHCenter
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 20
+                spacing: 20
+
+                // 快递信息输入区域
+                Pane {
+                    Layout.fillWidth: true
+                    Material.elevation: 2
+
+                    ColumnLayout {
+                        width: parent.width
+                        spacing: 15
+
+                        Label {
+                            text: "录入快递信息"
+                            font.pixelSize: 18
+                            font.bold: true
+                        }
+
+                        TextField {
+                            id: receiverPhone
+                            Layout.fillWidth: true
+                            placeholderText: "收件人手机号"
+                            validator: RegularExpressionValidator { regularExpression: /^1[3-9]\d{9}$/ }
+                        }
+
+                        ComboBox {
+                            id: lockerSelector
+                            Layout.fillWidth: true
+                            model: packageManager.getAvailableLockers()
+                            textRole: "display"
+                            valueRole: "lockerId"
+                            displayText: currentText ? "选择柜号: " + currentText : "请选择储物柜"
+                        }
+
+                        Button {
+                            text: "存放快递"
+                            Layout.fillWidth: true
+                            enabled: receiverPhone.acceptableInput && lockerSelector.currentText
+                            highlighted: true
+                            Material.background: Material.primary
+
+                            onClicked: {
+                                var result = packageManager.depositPackage(
+                                    receiverPhone.text,
+                                    parseInt(lockerSelector.currentText),
+                                    loginManager.currentUser
+                                )
+                                if (result.success) {
+                                    depositDialog.message = "快递存放成功！\n取件码：" + result.pickupCode
+                                    depositDialog.open()
+                                    // 清空输入
+                                    receiverPhone.text = ""
+                                    lockerSelector.currentIndex = -1
+                                } else {
+                                    errorDialog.message = "存放失败：" + result.message
+                                    errorDialog.open()
+                                }
+                            }
+                        }
+                    }
                 }
 
-                Button {
-                    text: "录入快递信息"
-                    onClicked: console.log("录入快递信息功能")
-                }
+                // 快递查询区域
+                Pane {
+                    Layout.fillWidth: true
+                    Material.elevation: 2
 
-                Button {
-                    text: "存放快递"
-                    onClicked: console.log("存放快递功能")
-                }
+                    ColumnLayout {
+                        width: parent.width
+                        spacing: 15
 
-                Button {
-                    text: "查询快递使用状态"
-                    onClicked: console.log("查询快递状态功能")
+                        Label {
+                            text: "快递查询"
+                            font.pixelSize: 18
+                            font.bold: true
+                        }
+
+                        TextField {
+                            id: queryPhone
+                            Layout.fillWidth: true
+                            placeholderText: "输入手机号查询快递"
+                            validator: RegularExpressionValidator { regularExpression: /^1[3-9]\d{9}$/ }
+                        }
+
+                        Button {
+                            text: "查询"
+                            Layout.fillWidth: true
+                            enabled: queryPhone.acceptableInput
+                            highlighted: true
+                            Material.background: Material.accent
+
+                            onClicked: {
+                                var packages = packageManager.queryPackagesByPhone(queryPhone.text)
+                                queryDialog.message = packages || "未找到相关快递"
+                                queryDialog.open()
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 对话框
+            Dialog {
+                id: depositDialog
+                property string message: ""
+                title: "存放结果"
+                modal: true
+                standardButtons: Dialog.Ok
+                x: (parent.width - width) / 2
+                y: (parent.height - height) / 2
+
+                Label {
+                    text: depositDialog.message
+                    wrapMode: Text.WordWrap
+                }
+            }
+
+            Dialog {
+                id: queryDialog
+                property string message: ""
+                title: "查询结果"
+                modal: true
+                standardButtons: Dialog.Ok
+                x: (parent.width - width) / 2
+                y: (parent.height - height) / 2
+                width: 400
+
+                ScrollView {
+                    anchors.fill: parent
+                    clip: true
+
+                    Label {
+                        text: queryDialog.message
+                        wrapMode: Text.WordWrap
+                        width: parent.width
+                    }
+                }
+            }
+
+            Dialog {
+                id: errorDialog
+                property string message: ""
+                title: "错误"
+                modal: true
+                standardButtons: Dialog.Ok
+                x: (parent.width - width) / 2
+                y: (parent.height - height) / 2
+
+                Label {
+                    text: errorDialog.message
+                    wrapMode: Text.WordWrap
                 }
             }
         }
@@ -233,32 +381,96 @@ ApplicationWindow {
 
     Component {
         id: userPage
-        Item {
-            Column {
-                spacing: 10
-                anchors.centerIn: parent
-
-                Text {
-                    text: "取件人主页"
-                    font.pixelSize: 24
-                    horizontalAlignment: Text.AlignHCenter
+        Page {
+            header: ToolBar {
+                RowLayout {
+                    anchors.fill: parent
+                    Label {
+                        text: "取件人主页"
+                        font.pixelSize: 20
+                        Layout.fillWidth: true
+                        horizontalAlignment: Qt.AlignHCenter
+                    }
+                    ToolButton {
+                        text: qsTr("退出")
+                        onClicked: stackView.pop()
+                    }
                 }
+            }
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 20
+                spacing: 20
 
                 TextField {
                     id: pickupCodeInput
-                    width: 200
+                    Layout.fillWidth: true
                     placeholderText: "请输入取件码"
+                    validator: RegularExpressionValidator { regularExpression: /^\d{6}$/ }
                 }
 
                 Button {
                     text: "取件"
+                    Layout.fillWidth: true
+                    enabled: pickupCodeInput.acceptableInput
                     onClicked: {
-                        if (pickupCodeInput.text !== "") {
-                            console.log("验证取件码，执行取件操作")
-                        } else {
-                            console.log("取件码不能为空")
-                        }
+                        var result = packageManager.pickupPackage(pickupCodeInput.text)
+                        resultDialog.message = result.success ? 
+                            "取件成功！\n柜号：" + result.lockerNumber : 
+                            "取件失败：" + result.message
+                        resultDialog.open()
                     }
+                }
+
+                TextField {
+                    id: phoneQueryInput
+                    Layout.fillWidth: true
+                    placeholderText: "请输入手机号查询取件码"
+                    validator: RegularExpressionValidator { regularExpression: /^1[3-9]\d{9}$/ }
+                }
+
+                Button {
+                    text: "查询取件码"
+                    Layout.fillWidth: true
+                    enabled: phoneQueryInput.acceptableInput
+                    onClicked: {
+                        var codes = packageManager.getPickupCodes(phoneQueryInput.text)
+                        queryDialog.message = codes.length > 0 ?
+                            "您的取件码：\n" + codes.join("\n") :
+                            "没有找到相关取件码"
+                        queryDialog.open()
+                    }
+                }
+            }
+
+            Dialog {
+                id: resultDialog
+                property string message: ""
+                title: "取件结果"
+                modal: true
+                standardButtons: Dialog.Ok
+                x: (parent.width - width) / 2
+                y: (parent.height - height) / 2
+
+                Label {
+                    text: resultDialog.message
+                    wrapMode: Text.WordWrap
+                }
+            }
+
+            Dialog {
+                id: queryDialog
+                property string message: ""
+                title: "取件码查询"
+                modal: true
+                standardButtons: Dialog.Ok
+                x: (parent.width - width) / 2
+                y: (parent.height - height) / 2
+
+                Label {
+                    text: queryDialog.message
+                    wrapMode: Text.WordWrap
                 }
             }
         }
