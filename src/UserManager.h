@@ -17,6 +17,10 @@ public:
     // 验证用户登录信息
     bool validateUser(const QString& username, const QString& password, const QString& role);
 
+signals:
+    void registerTrue();
+    void registerFalse();
+
 private:
     DatabaseManager databaseManager;
 };

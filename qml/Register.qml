@@ -91,12 +91,14 @@ Item {
 
     Connections {
         target: userManager
-        onRegisterTrue: {
+        
+        function onRegisterTrue() {
             console.log("Registration successful")
             registerSucessDialog.open()
             // backToLogin()
         }
-        onRegisterFalse: {
+        
+        function onRegisterFalse() {
             console.log("Registration failed")
         }
     }

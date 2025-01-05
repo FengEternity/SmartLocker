@@ -8,7 +8,7 @@ ApplicationWindow {
     height: 480
     title: "Smart Locker System"
 
-    Material.theme: Material.Dark
+    Material.theme: Material.Light
     Material.primary: "#6200EE"
     Material.accent: "#03DAC5"
 
