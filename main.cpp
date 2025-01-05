@@ -4,6 +4,7 @@
 #include "src/LoginManager.h"
 #include "src/DatabaseManager.h"
 #include "src/UserManager.h"
+#include "src/PackageManager.h"
 
 int main(int argc, char *argv[])
 {
@@ -29,6 +30,13 @@ int main(int argc, char *argv[])
             QCoreApplication::exit(-1);
     }, Qt::QueuedConnection);
     engine.load(url);
+
+    qmlRegisterType<PackageManager>("com.example.packagemanager", 1, 0, "PackageManager");
+    
+    DatabaseManager dbManager("lockers.db");
+    PackageManager packageManager(&dbManager);
+    
+    engine.rootContext()->setContextProperty("packageManager", &packageManager);
 
     return app.exec();
 }

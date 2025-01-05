@@ -13,8 +13,18 @@ public:
     void initializeDatabase();
     bool userExists(const QString& username);
 
+    // 新增快递相关方法
+    bool createPackage(const QString& phoneNumber, const QString& courierAccount, int lockerId);
+    bool updatePackageStatus(const QString& packageId, const QString& status);
+    bool verifyPickupCode(const QString& pickupCode);
+    QString getPackagesByPhone(const QString& phoneNumber);
+    QStringList getOverduePackages();
+
+    QSqlDatabase& getDatabase() { return db; }
+
 private:
     QSqlDatabase db;
+    QString generatePickupCode();
 };
 
 #endif // DATABASEMANAGER_H
