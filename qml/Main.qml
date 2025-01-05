@@ -258,63 +258,7 @@ ApplicationWindow {
                 anchors.margins: 20
                 spacing: 20
 
-                // 储物柜状态卡片
-                Pane {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    Material.elevation: 2
-
-                    ColumnLayout {
-                        anchors.fill: parent
-                        spacing: 15
-
-                        Label {
-                            text: "储物柜状态"
-                            font.pixelSize: 18
-                            font.bold: true
-                        }
-
-                        GridLayout {
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            columns: 4
-                            rowSpacing: 10
-                            columnSpacing: 10
-
-                            Repeater {
-                                model: 10 // 显示10个储物柜
-
-                                delegate: Rectangle {
-                                    Layout.fillWidth: true
-                                    Layout.preferredWidth: 150
-                                    Layout.preferredHeight: 80
-                                    radius: 5
-                                    color: packageManager.isLockerAvailable(index + 1) ? "#E8F5E9" : "#FFEBEE"
-                                    border.color: packageManager.isLockerAvailable(index + 1) ? "#81C784" : "#EF9A9A"
-
-                                    ColumnLayout {
-                                        anchors.centerIn: parent
-                                        spacing: 5
-
-                                        Label {
-                                            text: "柜号: " + (index + 1)
-                                            font.pixelSize: 16
-                                            Layout.alignment: Qt.AlignHCenter
-                                        }
-                                        Label {
-                                            text: packageManager.isLockerAvailable(index + 1) ? "空闲" : "使用中"
-                                            color: packageManager.isLockerAvailable(index + 1) ? "#2E7D32" : "#C62828"
-                                            font.pixelSize: 14
-                                            Layout.alignment: Qt.AlignHCenter
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // 操作按钮区域
+                // 功能按钮区域
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 20
@@ -328,16 +272,77 @@ ApplicationWindow {
                     }
 
                     Button {
-                        text: "查看超时快递"
+                        text: "刷新超时快递"
                         Layout.fillWidth: true
                         Material.background: Material.accent
                         highlighted: true
                         onClicked: {
-                            var overduePackages = packageManager.getOverduePackages()
-                            overdueDialog.text = overduePackages.length > 0 
-                                ? "超时快递列表:\n" + overduePackages.join("\n")
-                                : "没有超时快递"
-                            overdueDialog.open()
+                            // 直接在这里更新列表，不使用 reload 函数
+                            overdueListModel.clear()
+                            var packages = packageManager.getOverduePackages()
+                            for (var i = 0; i < packages.length; i++) {
+                                overdueListModel.append({"text": packages[i]})
+                            }
+                        }
+                    }
+                }
+
+                // 超时快递列表区域
+                Pane {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    Material.elevation: 2
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        spacing: 10
+
+                        Label {
+                            text: "超时快递列表"
+                            font.pixelSize: 18
+                            font.bold: true
+                        }
+
+                        ListView {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            clip: true
+                            model: ListModel { 
+                                id: overdueListModel
+                                // 初始化时加载数据
+                                Component.onCompleted: {
+                                    var packages = packageManager.getOverduePackages()
+                                    for (var i = 0; i < packages.length; i++) {
+                                        append({"text": packages[i]})
+                                    }
+                                }
+                            }
+
+                            delegate: ItemDelegate {
+                                width: parent.width
+                                height: 60
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.margins: 10
+                                    spacing: 10
+
+                                    Label {
+                                        text: model.text
+                                        Layout.fillWidth: true
+                                        wrapMode: Text.WordWrap
+                                    }
+                                }
+                            }
+
+                            // 当列表为空时显示的占位符
+                            Label {
+                                anchors.centerIn: parent
+                                text: "无超时快递"
+                                font.pixelSize: 16
+                                color: "#666666"
+                                visible: overdueListModel.count === 0
+                            }
                         }
                     }
                 }
@@ -361,6 +366,7 @@ ApplicationWindow {
                         model: packageManager.getAvailableLockers()
                         Layout.fillWidth: true
                         Layout.preferredHeight: 40
+                        displayText: currentIndex === -1 ? "请选择储物柜" : "柜号: " + currentText
                     }
 
                     ComboBox {
@@ -373,30 +379,14 @@ ApplicationWindow {
 
                 onAccepted: {
                     packageManager.updateLockerStatus(
-                        lockerSelector.currentText,
-                        statusSelector.currentText
+                        parseInt(lockerSelector.currentText),
+                        statusSelector.currentText.toLowerCase()
                     )
-                }
-            }
-
-            Dialog {
-                id: overdueDialog
-                title: "超时快递"
-                x: (parent.width - width) / 2
-                y: (parent.height - height) / 2
-                width: 400
-                modal: true
-                standardButtons: Dialog.Ok
-
-                ScrollView {
-                    anchors.fill: parent
-                    clip: true
-
-                    Text {
-                        id: overdueText
-                        text: ""
-                        wrapMode: Text.WordWrap
-                        width: parent.width
+                    // 更新列表
+                    overdueListModel.clear()
+                    var packages = packageManager.getOverduePackages()
+                    for (var i = 0; i < packages.length; i++) {
+                        overdueListModel.append({"text": packages[i]})
                     }
                 }
             }
