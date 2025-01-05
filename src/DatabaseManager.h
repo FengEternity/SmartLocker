@@ -24,7 +24,7 @@ public:
 
 private:
     QSqlDatabase db;
-    QString generatePickupCode();
+    QString generatePickupCode(const QString& phoneNumber);
 };
 
 #endif // DATABASEMANAGER_H

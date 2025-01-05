@@ -46,7 +46,7 @@ void DatabaseManager::initializeDatabase() {
     // 创建储物柜表
     query.exec("CREATE TABLE IF NOT EXISTS lockers ("
               "id INTEGER PRIMARY KEY, "
-              "status TEXT, "
+              "status TEXT DEFAULT 'empty', "
               "package_id INTEGER)");
 
     // 插入默认用户数据
@@ -54,11 +54,19 @@ void DatabaseManager::initializeDatabase() {
     insertUser("12222222222", "user", "deliver");
     insertUser("13333333333", "guest", "user");
 
-    // 初始化一些测试储物柜
+    // 初始化储物柜
+    query.exec("CREATE TABLE IF NOT EXISTS lockers ("
+              "id INTEGER PRIMARY KEY, "
+              "status TEXT DEFAULT 'empty', "
+              "package_id INTEGER)");
+
+    // 插入初始储物柜数据
     for(int i = 1; i <= 10; i++) {
         query.prepare("INSERT OR IGNORE INTO lockers (id, status) VALUES (?, 'empty')");
         query.addBindValue(i);
-        query.exec();
+        if (!query.exec()) {
+            qDebug() << "Failed to initialize locker" << i << ":" << query.lastError().text();
+        }
     }
 }
 
@@ -113,7 +121,7 @@ bool DatabaseManager::userExists(const QString& username) {
 
 bool DatabaseManager::createPackage(const QString& phoneNumber, const QString& courierAccount, int lockerId) {
     QSqlQuery query;
-    QString pickupCode = generatePickupCode();
+    QString pickupCode = generatePickupCode(phoneNumber);
     
     query.prepare("INSERT INTO packages (phone_number, pickup_code, locker_id, "
                  "courier_account, status, created_time) "
@@ -126,14 +134,9 @@ bool DatabaseManager::createPackage(const QString& phoneNumber, const QString& c
     return query.exec();
 }
 
-QString DatabaseManager::generatePickupCode() {
-    // 使用 QRandomGenerator 替代 qrand
-    QRandomGenerator& generator = *QRandomGenerator::system();
-    QString code;
-    for(int i = 0; i < 6; i++) {
-        code.append(QString::number(generator.bounded(10))); // 生成 0-9 的随机数
-    }
-    return code;
+QString DatabaseManager::generatePickupCode(const QString& phoneNumber) {
+    // 使用手机号后6位作为取件码
+    return phoneNumber.right(6);
 }
 
 bool DatabaseManager::verifyPickupCode(const QString& pickupCode) {

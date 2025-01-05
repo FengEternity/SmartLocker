@@ -12,8 +12,8 @@ ApplicationWindow {
     title: "智能快递柜系统"
 
     Material.theme: Material.Light
-    Material.primary: "#C6E092"
-    Material.accent: "#F7F7D2"
+    Material.primary: "#f6772a"
+    Material.accent: "#35afe1"
 
     StackView {
         id: stackView
@@ -82,9 +82,8 @@ ApplicationWindow {
                             id: lockerSelector
                             Layout.fillWidth: true
                             model: packageManager.getAvailableLockers()
-                            textRole: "display"
-                            valueRole: "lockerId"
-                            displayText: currentText ? "选择柜号: " + currentText : "请选择储物柜"
+                            currentIndex: -1
+                            displayText: currentIndex === -1 ? "请选择储物柜" : "柜号: " + currentText
                         }
 
                         Button {
@@ -163,10 +162,21 @@ ApplicationWindow {
                 standardButtons: Dialog.Ok
                 x: (parent.width - width) / 2
                 y: (parent.height - height) / 2
+                width: 300
+                height: 150
 
-                Label {
-                    text: depositDialog.message
-                    wrapMode: Text.WordWrap
+                contentItem: ColumnLayout {
+                    spacing: 10
+
+                    Label {
+                        text: depositDialog.message
+                        wrapMode: Text.WordWrap
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        font.pixelSize: 16
+                    }
                 }
             }
 
@@ -179,15 +189,18 @@ ApplicationWindow {
                 x: (parent.width - width) / 2
                 y: (parent.height - height) / 2
                 width: 400
+                height: 300
 
-                ScrollView {
-                    anchors.fill: parent
+                contentItem: ScrollView {
                     clip: true
 
                     Label {
                         text: queryDialog.message
                         wrapMode: Text.WordWrap
                         width: parent.width
+                        horizontalAlignment: Text.AlignLeft
+                        font.pixelSize: 14
+                        padding: 20
                     }
                 }
             }
@@ -200,10 +213,22 @@ ApplicationWindow {
                 standardButtons: Dialog.Ok
                 x: (parent.width - width) / 2
                 y: (parent.height - height) / 2
+                width: 300
+                height: 150
 
-                Label {
-                    text: errorDialog.message
-                    wrapMode: Text.WordWrap
+                contentItem: ColumnLayout {
+                    spacing: 10
+
+                    Label {
+                        text: errorDialog.message
+                        wrapMode: Text.WordWrap
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        font.pixelSize: 16
+                        color: "#d32f2f"
+                    }
                 }
             }
         }
@@ -218,10 +243,8 @@ ApplicationWindow {
                     Label {
                         text: "管理员主页"
                         font.pixelSize: 20
-                        elide: Label.ElideRight
-                        horizontalAlignment: Qt.AlignHCenter
-                        verticalAlignment: Qt.AlignVCenter
                         Layout.fillWidth: true
+                        horizontalAlignment: Qt.AlignHCenter
                     }
                     ToolButton {
                         text: qsTr("退出")
@@ -238,11 +261,12 @@ ApplicationWindow {
                 // 储物柜状态卡片
                 Pane {
                     Layout.fillWidth: true
+                    Layout.fillHeight: true
                     Material.elevation: 2
-                    
+
                     ColumnLayout {
                         anchors.fill: parent
-                        spacing: 10
+                        spacing: 15
 
                         Label {
                             text: "储物柜状态"
@@ -250,36 +274,36 @@ ApplicationWindow {
                             font.bold: true
                         }
 
-                        GridView {
+                        GridLayout {
                             Layout.fillWidth: true
-                            height: 300
-                            cellWidth: 150
-                            cellHeight: 80
-                            model: packageManager.getAvailableLockers()
-                            
-                            delegate: ItemDelegate {
-                                width: 140
-                                height: 70
-                                
-                                Rectangle {
-                                    anchors.fill: parent
-                                    anchors.margins: 5
+                            Layout.fillHeight: true
+                            columns: 4
+                            rowSpacing: 10
+                            columnSpacing: 10
+
+                            Repeater {
+                                model: 10 // 显示10个储物柜
+
+                                delegate: Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.preferredWidth: 150
+                                    Layout.preferredHeight: 80
                                     radius: 5
-                                    color: packageManager.isLockerAvailable(modelData) ? "#E8F5E9" : "#FFEBEE"
-                                    border.color: packageManager.isLockerAvailable(modelData) ? "#81C784" : "#EF9A9A"
+                                    color: packageManager.isLockerAvailable(index + 1) ? "#E8F5E9" : "#FFEBEE"
+                                    border.color: packageManager.isLockerAvailable(index + 1) ? "#81C784" : "#EF9A9A"
 
                                     ColumnLayout {
                                         anchors.centerIn: parent
                                         spacing: 5
 
                                         Label {
-                                            text: "柜号: " + modelData
+                                            text: "柜号: " + (index + 1)
                                             font.pixelSize: 16
                                             Layout.alignment: Qt.AlignHCenter
                                         }
                                         Label {
-                                            text: packageManager.isLockerAvailable(modelData) ? "空闲" : "使用中"
-                                            color: packageManager.isLockerAvailable(modelData) ? "#2E7D32" : "#C62828"
+                                            text: packageManager.isLockerAvailable(index + 1) ? "空闲" : "使用中"
+                                            color: packageManager.isLockerAvailable(index + 1) ? "#2E7D32" : "#C62828"
                                             font.pixelSize: 14
                                             Layout.alignment: Qt.AlignHCenter
                                         }
@@ -452,10 +476,21 @@ ApplicationWindow {
                 standardButtons: Dialog.Ok
                 x: (parent.width - width) / 2
                 y: (parent.height - height) / 2
+                width: 300
+                height: 150
 
-                Label {
-                    text: resultDialog.message
-                    wrapMode: Text.WordWrap
+                contentItem: ColumnLayout {
+                    spacing: 10
+
+                    Label {
+                        text: resultDialog.message
+                        wrapMode: Text.WordWrap
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        font.pixelSize: 16
+                    }
                 }
             }
 
@@ -467,10 +502,20 @@ ApplicationWindow {
                 standardButtons: Dialog.Ok
                 x: (parent.width - width) / 2
                 y: (parent.height - height) / 2
+                width: 300
+                height: 200
 
-                Label {
-                    text: queryDialog.message
-                    wrapMode: Text.WordWrap
+                contentItem: ScrollView {
+                    clip: true
+
+                    Label {
+                        text: queryDialog.message
+                        wrapMode: Text.WordWrap
+                        width: parent.width
+                        horizontalAlignment: Text.AlignLeft
+                        font.pixelSize: 14
+                        padding: 20
+                    }
                 }
             }
         }
