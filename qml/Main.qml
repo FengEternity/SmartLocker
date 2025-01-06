@@ -14,9 +14,11 @@ ApplicationWindow {
 
     // 主题设置
     Material.theme: settingsManager.isDarkMode ? Material.Dark : Material.Light
-    Material.primary: "#eeb28d"
-    Material.accent: "#35afe1"
-
+    
+    // 定义主题相关的颜色
+    readonly property color primaryColor: settingsManager.isDarkMode ? "#ffb499" : "#564032"
+    readonly property color accentColor: settingsManager.isDarkMode ? "#4fc3f7" : "#0e2c39"
+    
     // 语言资源加载器
     property var i18n: null
     
@@ -172,7 +174,7 @@ ApplicationWindow {
                             Layout.fillWidth: true
                             enabled: receiverPhone.acceptableInput && lockerSelector.currentText
                             highlighted: true
-                            Material.background: Material.primary
+                            Material.background: primaryColor
 
                             onClicked: {
                                 var result = packageManager.depositPackage(
@@ -223,7 +225,7 @@ ApplicationWindow {
                             Layout.fillWidth: true
                             enabled: queryPhone.acceptableInput
                             highlighted: true
-                            Material.background: Material.accent
+                            Material.background: accentColor
 
                             onClicked: {
                                 var packages = packageManager.queryPackagesByPhone(queryPhone.text)
@@ -348,7 +350,7 @@ ApplicationWindow {
                     Button {
                         text: i18n ? i18n.modifyLockerStatus : "修改快递柜状态"
                         Layout.fillWidth: true
-                        Material.background: Material.primary
+                        Material.background: primaryColor
                         highlighted: true
                         onClicked: statusDialog.open()
                     }
@@ -356,7 +358,7 @@ ApplicationWindow {
                     Button {
                         text: i18n ? i18n.refreshOverdue : "刷新超时快递"
                         Layout.fillWidth: true
-                        Material.background: Material.accent
+                        Material.background: accentColor
                         highlighted: true
                         onClicked: {
                             overdueListModel.clear()
@@ -623,7 +625,7 @@ ApplicationWindow {
                 Button {
                     text: i18n ? i18n.rateService : "评价服务"
                     Layout.fillWidth: true
-                    Material.background: Material.accent
+                    Material.background: accentColor
                     highlighted: true
                     onClicked: ratingDialog.open()
                 }
