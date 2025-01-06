@@ -107,4 +107,8 @@ QtObject {
     property string rating1: "1 - Very Poor"
     property string thankForRating: "Thank you for your rating!"
     property string ratingFailed: "Failed to submit rating, please try again later"
+    
+    // Overdue packages
+    property string overduePackagesTitle: "Overdue Packages Notice"
+    property string overduePackagesNotice: "You have the following overdue packages, please pick them up as soon as possible:"
 } 

@@ -217,3 +217,38 @@ QVariantList PackageManager::getRatings() {
     LogManager::getInstance().info("Getting ratings");
     return m_db->getRatings();
 }
+
+QStringList PackageManager::getOverduePackagesByPhone(const QString& phone)
+{
+    QStringList result;
+    QSqlQuery query(m_db->getDatabase());
+    
+    // 修改查询语句以匹配实际的数据库表结构
+    query.prepare(
+        "SELECT phone_number, locker_id, created_time "  // 修改列名以匹配表结构
+        "FROM packages "  // 不需要别名 p
+        "WHERE phone_number = ? "  // 修改列名
+        "AND status = 'pending' "
+        "AND DATETIME(created_time, '+24 hours') < DATETIME('now')"  // 使用 created_time
+    );
+    
+    query.addBindValue(phone);
+    
+    if (query.exec()) {
+        while (query.next()) {
+            QString packageInfo = QString("手机号: %1, 柜号: %2, 存入时间: %3")
+                .arg(query.value(0).toString())
+                .arg(query.value(1).toString())
+                .arg(query.value(2).toString());
+            result.append(packageInfo);
+            qDebug() << "Found overdue package:" << packageInfo;
+        }
+    } else {
+        qWarning() << "Failed to query overdue packages for phone:" << phone;
+        qWarning() << "Error:" << query.lastError().text();
+        qWarning() << "Query:" << query.lastQuery();
+    }
+    
+    qDebug() << "Total overdue packages found:" << result.size();
+    return result;
+}

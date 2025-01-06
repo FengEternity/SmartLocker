@@ -35,6 +35,8 @@ public:
     Q_INVOKABLE bool submitRating(int score, const QString& comment);
     Q_INVOKABLE QVariantList getRatings();
 
+    Q_INVOKABLE QStringList getOverduePackagesByPhone(const QString& phone);
+
 private:
     DatabaseManager* m_db;
     QString getLockerStatus(int lockerId);

@@ -107,4 +107,8 @@ QtObject {
     property string rating1: "1分 非常不满意"
     property string thankForRating: "感谢您的评价！"
     property string ratingFailed: "评价提交失败，请稍后重试"
+    
+    // 添加以下属性
+    property string overduePackagesTitle: "超时快递提醒"
+    property string overduePackagesNotice: "您有以下超时快递，请尽快取出："
 } 

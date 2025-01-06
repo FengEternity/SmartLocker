@@ -709,6 +709,67 @@ ApplicationWindow {
                         }
                     }
                 }
+
+                // 只保留一个超时提醒对话框
+                Dialog {
+                    id: overdueDialog
+                    title: i18n ? i18n.overduePackagesTitle : "超时快递提醒"
+                    modal: true
+                    standardButtons: Dialog.Ok
+                    x: (parent.width - width) / 2
+                    y: (parent.height - height) / 2
+                    width: 400
+                    height: 300
+
+                    ScrollView {
+                        anchors.fill: parent
+                        clip: true
+
+                        TextArea {
+                            id: overduePackagesText
+                            readOnly: true
+                            wrapMode: Text.WordWrap
+                            font.pixelSize: 14
+                        }
+                    }
+
+                    // 添加对话框状态调试
+                    onOpened: console.log("超时快递对话框已打开")
+                    onClosed: console.log("超时快递对话框已关闭")
+                }
+
+                // 在页面加载完成时检查超时快递
+                Component.onCompleted: {
+                    console.log("用户页面加载完成")
+                    console.log("当前用户:", loginManager.currentUser)
+                    console.log("检查用户超时快递...")
+                    
+                    // 检查 packageManager 是否可用
+                    if (!packageManager) {
+                        console.error("packageManager 未定义!")
+                        return
+                    }
+
+                    try {
+                        var packages = packageManager.getOverduePackagesByPhone(loginManager.currentUser)
+                        console.log("获取到的超时快递:", JSON.stringify(packages))
+                        
+                        if (packages && packages.length > 0) {
+                            console.log("发现超时快递，准备显示对话框")
+                            var noticeText = (i18n ? i18n.overduePackagesNotice : "您有以下超时快递，请尽快取出：\n\n") +
+                                packages.join("\n\n")
+                            console.log("对话框内容:", noticeText)
+                            
+                            overduePackagesText.text = noticeText
+                            overdueDialog.open()
+                            console.log("已触发对话框打开")
+                        } else {
+                            console.log("没有发现超时快递")
+                        }
+                    } catch (e) {
+                        console.error("检查超时快递时发生错误:", e)
+                    }
+                }
             }
 
             Dialog {
