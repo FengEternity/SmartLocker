@@ -14,28 +14,48 @@ ApplicationWindow {
 
     // 主题设置
     Material.theme: settingsManager.isDarkMode ? Material.Dark : Material.Light
-    Material.primary: "#f6772a"
+    Material.primary: "#eeb28d"
     Material.accent: "#35afe1"
 
     // 语言资源加载器
     property var i18n: null
     
     // 设置菜单
-    menuBar: MenuBar {
-        Menu {
-            // 使用三元运算符检查 i18n 是否存在
-            title: i18n ? i18n.settings : "设置"
-            MenuItem {
-                text: i18n ? (settingsManager.isDarkMode ? i18n.switchToLight : i18n.switchToDark) 
-                          : (settingsManager.isDarkMode ? "切换到浅色主题" : "切换到深色主题")
-                onTriggered: settingsManager.isDarkMode = !settingsManager.isDarkMode
+    header: ToolBar {
+        Material.background: "transparent"  // 设置透明背景
+        
+        RowLayout {
+            anchors.fill: parent
+            
+            // 左侧空白占位
+            Item {
+                Layout.fillWidth: true
             }
-            MenuItem {
-                text: i18n ? (settingsManager.language === "zh_CN" ? i18n.switchToEnglish : i18n.switchToChinese)
-                          : (settingsManager.language === "zh_CN" ? "Switch to English" : "切换到中文")
-                onTriggered: {
-                    settingsManager.language = settingsManager.language === "zh_CN" ? "en_US" : "zh_CN"
-                    loadTranslations()
+            
+            // 右侧设置菜单
+            ToolButton {
+                text: "⚙" // 使用齿轮图标
+                font.pixelSize: 20
+                
+                onClicked: settingsMenu.open()
+                
+                Menu {
+                    id: settingsMenu
+                    y: parent.height
+                    
+                    MenuItem {
+                        text: i18n ? (settingsManager.isDarkMode ? i18n.switchToLight : i18n.switchToDark) 
+                                  : (settingsManager.isDarkMode ? "切换到浅色主题" : "切换到深色主题")
+                        onTriggered: settingsManager.isDarkMode = !settingsManager.isDarkMode
+                    }
+                    MenuItem {
+                        text: i18n ? (settingsManager.language === "zh_CN" ? i18n.switchToEnglish : i18n.switchToChinese)
+                                  : (settingsManager.language === "zh_CN" ? "Switch to English" : "切换到中文")
+                        onTriggered: {
+                            settingsManager.language = settingsManager.language === "zh_CN" ? "en_US" : "zh_CN"
+                            loadTranslations()
+                        }
+                    }
                 }
             }
         }
@@ -80,13 +100,13 @@ ApplicationWindow {
                 RowLayout {
                     anchors.fill: parent
                     Label {
-                        text: i18n.courierHome
+                        text: i18n ? i18n.courierHome : "快递员首页"
                         font.pixelSize: 20
                         Layout.fillWidth: true
                         horizontalAlignment: Qt.AlignHCenter
                     }
                     ToolButton {
-                        text: i18n.logout
+                        text: i18n ? i18n.logout : "退出"
                         onClicked: stackView.pop()
                     }
                 }
@@ -107,7 +127,7 @@ ApplicationWindow {
                         spacing: 15
 
                         Label {
-                            text: "录入快递信息"
+                            text: i18n ? i18n.enterPackageInfo : "录入快递信息"
                             font.pixelSize: 18
                             font.bold: true
                         }
@@ -115,7 +135,7 @@ ApplicationWindow {
                         TextField {
                             id: receiverPhone
                             Layout.fillWidth: true
-                            placeholderText: "收件人手机号"
+                            placeholderText: i18n ? i18n.receiverPhone : "收件人手机号"
                             validator: RegularExpressionValidator { regularExpression: /^1[3-9]\d{9}$/ }
                         }
 
@@ -137,7 +157,9 @@ ApplicationWindow {
                             }
                             textRole: "text"
                             currentIndex: -1
-                            displayText: currentIndex === -1 ? "请选择储物柜" : "柜号: " + currentText
+                            displayText: currentIndex === -1 ? 
+                                (i18n ? i18n.selectLocker : "请选择储物柜") : 
+                                (i18n ? i18n.lockerNumberPrefix : "柜号: ") + currentText
                             
                             onCurrentIndexChanged: {
                                 console.log("当前选中索引:", currentIndex)
@@ -146,7 +168,7 @@ ApplicationWindow {
                         }
 
                         Button {
-                            text: "存放快递"
+                            text: i18n ? i18n.depositPackage : "存放快递"
                             Layout.fillWidth: true
                             enabled: receiverPhone.acceptableInput && lockerSelector.currentText
                             highlighted: true
@@ -159,13 +181,14 @@ ApplicationWindow {
                                     loginManager.currentUser
                                 )
                                 if (result.success) {
-                                    depositDialog.message = "快递存放成功！\n取件码：" + result.pickupCode
+                                    depositDialog.message = (i18n ? i18n.depositSuccess : "快递存放成功！") + 
+                                        "\n" + (i18n ? i18n.pickupCode : "取件码：") + result.pickupCode
                                     depositDialog.open()
                                     // 清空输入
                                     receiverPhone.text = ""
                                     lockerSelector.currentIndex = -1
                                 } else {
-                                    errorDialog.message = "存放失败：" + result.message
+                                    errorDialog.message = (i18n ? i18n.depositFailed : "存放失败：") + result.message
                                     errorDialog.open()
                                 }
                             }
@@ -183,7 +206,7 @@ ApplicationWindow {
                         spacing: 15
 
                         Label {
-                            text: "快递查询"
+                            text: i18n ? i18n.packageQuery : "快递查询"
                             font.pixelSize: 18
                             font.bold: true
                         }
@@ -191,12 +214,12 @@ ApplicationWindow {
                         TextField {
                             id: queryPhone
                             Layout.fillWidth: true
-                            placeholderText: "输入手机号查询快递"
+                            placeholderText: i18n ? i18n.enterPhoneToQuery : "输入手机号查询快递"
                             validator: RegularExpressionValidator { regularExpression: /^1[3-9]\d{9}$/ }
                         }
 
                         Button {
-                            text: "查询"
+                            text: i18n ? i18n.query : "查询"
                             Layout.fillWidth: true
                             enabled: queryPhone.acceptableInput
                             highlighted: true
@@ -216,7 +239,7 @@ ApplicationWindow {
             Dialog {
                 id: depositDialog
                 property string message: ""
-                title: "存放结果"
+                title: i18n ? i18n.depositResult : "存放结果"
                 modal: true
                 standardButtons: Dialog.Ok
                 x: (parent.width - width) / 2
@@ -267,7 +290,7 @@ ApplicationWindow {
             Dialog {
                 id: errorDialog
                 property string message: ""
-                title: "错误"
+                title: i18n ? i18n.error : "错误"
                 modal: true
                 standardButtons: Dialog.Ok
                 x: (parent.width - width) / 2
@@ -300,13 +323,13 @@ ApplicationWindow {
                 RowLayout {
                     anchors.fill: parent
                     Label {
-                        text: i18n.adminHome
+                        text: i18n ? i18n.adminHome : "管理员首页"
                         font.pixelSize: 20
                         Layout.fillWidth: true
                         horizontalAlignment: Qt.AlignHCenter
                     }
                     ToolButton {
-                        text: i18n.logout
+                        text: i18n ? i18n.logout : "退出"
                         onClicked: stackView.pop()
                     }
                 }
@@ -323,7 +346,7 @@ ApplicationWindow {
                     spacing: 20
 
                     Button {
-                        text: "修改快递柜状态"
+                        text: i18n ? i18n.modifyLockerStatus : "修改快递柜状态"
                         Layout.fillWidth: true
                         Material.background: Material.primary
                         highlighted: true
@@ -331,12 +354,11 @@ ApplicationWindow {
                     }
 
                     Button {
-                        text: "刷新超时快递"
+                        text: i18n ? i18n.refreshOverdue : "刷新超时快递"
                         Layout.fillWidth: true
                         Material.background: Material.accent
                         highlighted: true
                         onClicked: {
-                            // 直接在这里更新列表，不使用 reload 函数
                             overdueListModel.clear()
                             var packages = packageManager.getOverduePackages()
                             for (var i = 0; i < packages.length; i++) {
@@ -357,7 +379,7 @@ ApplicationWindow {
                         spacing: 10
 
                         Label {
-                            text: "超时快递列表"
+                            text: i18n ? i18n.overdueList : "超时快递列表"
                             font.pixelSize: 18
                             font.bold: true
                         }
@@ -422,7 +444,7 @@ ApplicationWindow {
                             spacing: 10
 
                             Label {
-                                text: "用户评价"
+                                text: i18n ? i18n.userRatings : "用户评价"
                                 font.pixelSize: 18
                                 font.bold: true
                                 Layout.fillWidth: true  // 让标签填充剩余空间
@@ -430,7 +452,7 @@ ApplicationWindow {
                             }
 
                             Button {
-                                text: "刷新"
+                                text: i18n ? i18n.refresh : "刷新"
                                 Layout.alignment: Qt.AlignRight  // 将按钮对齐到右侧
                                 onClicked: {
                                     var ratings = packageManager.getRatings()
@@ -461,7 +483,7 @@ ApplicationWindow {
 
             Dialog {
                 id: statusDialog
-                title: "修改快递柜状态"
+                title: i18n ? i18n.modifyLockerStatus : "修改快递柜状态"
                 x: (parent.width - width) / 2
                 y: (parent.height - height) / 2
                 width: 300
@@ -500,7 +522,11 @@ ApplicationWindow {
 
                     ComboBox {
                         id: statusSelector
-                        model: ["空闲", "使用中", "维修中"]
+                        model: [
+                            i18n ? i18n.statusEmpty : "空闲",
+                            i18n ? i18n.statusOccupied : "使用中",
+                            i18n ? i18n.statusMaintenance : "维修中"
+                        ]
                         Layout.fillWidth: true
                         Layout.preferredHeight: 40
                     }
@@ -529,13 +555,13 @@ ApplicationWindow {
                 RowLayout {
                     anchors.fill: parent
                     Label {
-                        text: i18n.userHome
+                        text: i18n ? i18n.userHome : "用户首页"
                         font.pixelSize: 20
                         Layout.fillWidth: true
                         horizontalAlignment: Qt.AlignHCenter
                     }
                     ToolButton {
-                        text: i18n.logout
+                        text: i18n ? i18n.logout : "退出"
                         onClicked: stackView.pop()
                     }
                 }
@@ -549,19 +575,20 @@ ApplicationWindow {
                 TextField {
                     id: pickupCodeInput
                     Layout.fillWidth: true
-                    placeholderText: "请输入取件码"
+                    placeholderText: i18n ? i18n.enterPickupCode : "请输入取件码"
                     validator: RegularExpressionValidator { regularExpression: /^\d{6}$/ }
                 }
 
                 Button {
-                    text: "取件"
+                    text: i18n ? i18n.pickup : "取件"
                     Layout.fillWidth: true
                     enabled: pickupCodeInput.acceptableInput
                     onClicked: {
                         var result = packageManager.pickupPackage(pickupCodeInput.text)
                         resultDialog.message = result.success ? 
-                            "取件成功！\n柜号：" + result.lockerNumber : 
-                            "取件失败：" + result.message
+                            (i18n ? i18n.pickupSuccess : "取件成功！") + "\n" + 
+                            (i18n ? i18n.lockerNumberPrefix : "柜号：") + result.lockerNumber : 
+                            (i18n ? i18n.pickupFailed : "取件失败：") + result.message
                         resultDialog.open()
                     }
                 }
@@ -569,19 +596,18 @@ ApplicationWindow {
                 TextField {
                     id: phoneQueryInput
                     Layout.fillWidth: true
-                    placeholderText: "请输入手机号查询取件码"
+                    placeholderText: i18n ? i18n.queryPickupCode : "请输入手机号查询取件码"
                     validator: RegularExpressionValidator { regularExpression: /^1[3-9]\d{9}$/ }
                 }
 
                 Button {
-                    text: "查询取件码"
+                    text: i18n ? i18n.queryCode : "查询取件码"
                     Layout.fillWidth: true
                     enabled: phoneQueryInput.acceptableInput
                     onClicked: {
                         var codes = packageManager.getPickupCodes(phoneQueryInput.text)
-                        queryDialog.message = codes.length > 0 ?
-                            "您的取件码：\n" + codes.join("\n") :
-                            "没有找到相关取件码"
+                        queryDialog.message = codes.length > 0 ? codes.join("\n") : 
+                            (i18n ? i18n.noPackagesFound : "未找到相关快递")
                         queryDialog.open()
                     }
                 }
@@ -595,7 +621,7 @@ ApplicationWindow {
 
                 // 添加评价按钮
                 Button {
-                    text: "评价服务"
+                    text: i18n ? i18n.rateService : "评价服务"
                     Layout.fillWidth: true
                     Material.background: Material.accent
                     highlighted: true
@@ -605,7 +631,7 @@ ApplicationWindow {
                 // 添加评价对话框
                 Dialog {
                     id: ratingDialog
-                    title: "服务评价"
+                    title: i18n ? i18n.rateService : "评价服务"
                     modal: true
                     standardButtons: Dialog.Ok | Dialog.Cancel
                     x: (parent.width - width) / 2
@@ -628,7 +654,13 @@ ApplicationWindow {
                             id: ratingScore
                             Layout.fillWidth: true
                             Layout.preferredHeight: 40
-                            model: ["5分 非常满意", "4分 满意", "3分 一般", "2分 不满意", "1分 非常不满意"]
+                            model: [
+                                i18n ? i18n.rating5 : "5分 非常满意",
+                                i18n ? i18n.rating4 : "4分 满意",
+                                i18n ? i18n.rating3 : "3分 一般",
+                                i18n ? i18n.rating2 : "2分 不满意",
+                                i18n ? i18n.rating1 : "1分 非常不满意"
+                            ]
                         }
 
                         TextField {
