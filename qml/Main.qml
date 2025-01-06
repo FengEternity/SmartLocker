@@ -81,9 +81,27 @@ ApplicationWindow {
                         ComboBox {
                             id: lockerSelector
                             Layout.fillWidth: true
-                            model: packageManager.getAvailableLockers()
+                            model: ListModel {
+                                id: lockerModel
+                                Component.onCompleted: {
+                                    console.log("正在获取可用储物柜...")
+                                    var lockers = packageManager.getAvailableLockers()
+                                    console.log("获取到的储物柜列表:", JSON.stringify(lockers))
+                                    for (var i = 0; i < lockers.length; i++) {
+                                        console.log("添加储物柜:", lockers[i])
+                                        append({"text": lockers[i]})
+                                    }
+                                    console.log("储物柜列表加载完成，数量:", lockerModel.count)
+                                }
+                            }
+                            textRole: "text"
                             currentIndex: -1
                             displayText: currentIndex === -1 ? "请选择储物柜" : "柜号: " + currentText
+                            
+                            onCurrentIndexChanged: {
+                                console.log("当前选中索引:", currentIndex)
+                                console.log("当前选中文本:", currentText)
+                            }
                         }
 
                         Button {
@@ -415,10 +433,28 @@ ApplicationWindow {
 
                     ComboBox {
                         id: lockerSelector
-                        model: packageManager.getAvailableLockers()
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 40
+                        model: ListModel {
+                            id: adminLockerModel
+                            Component.onCompleted: {
+                                console.log("管理员页面：正在获取储物柜列表...")
+                                var lockers = packageManager.getAvailableLockers()
+                                console.log("管理员页面：获取到的储物柜列表:", JSON.stringify(lockers))
+                                for (var i = 0; i < lockers.length; i++) {
+                                    console.log("管理员页面：添加储物柜:", lockers[i])
+                                    append({"text": lockers[i]})
+                                }
+                                console.log("管理员页面：储物柜列表加载完成，数量:", adminLockerModel.count)
+                            }
+                        }
+                        textRole: "text"
+                        currentIndex: -1
                         displayText: currentIndex === -1 ? "请选择储物柜" : "柜号: " + currentText
+                        
+                        onCurrentIndexChanged: {
+                            console.log("管理员页面：当前选中索引:", currentIndex)
+                            console.log("管理员页面：当前选中文本:", currentText)
+                        }
                     }
 
                     ComboBox {

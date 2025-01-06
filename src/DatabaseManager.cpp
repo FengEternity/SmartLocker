@@ -5,6 +5,7 @@
 #include <QDebug>
 #include <QRegularExpression>
 #include <QRandomGenerator>
+#include "LogManager.h"
 
 DatabaseManager::DatabaseManager(const QString& path) {
     db = QSqlDatabase::addDatabase("QSQLITE");
@@ -12,20 +13,24 @@ DatabaseManager::DatabaseManager(const QString& path) {
 
     if (!db.open()) {
         qDebug() << "Failed to open the database:" << db.lastError().text();
+        LogManager::getInstance().error("Failed to open the database:" + db.lastError().text());
         return;
     }
 
-    // if (!QFile::exists(path)) {
-    //     initializeDatabase();
-    // }
+    if (!QFile::exists(path)) {
+        initializeDatabase();
+        LogManager::getInstance().info("Database initialized successfully");
+    }
 
-    initializeDatabase();
+    // initializeDatabase();
 }
 
 void DatabaseManager::initializeDatabase() {
+    LogManager::getInstance().info("Initializing database");
     QSqlQuery query;
 
     // 创建用户表
+    LogManager::getInstance().info("Creating users table");
     query.exec("CREATE TABLE IF NOT EXISTS users ("
               "id INTEGER PRIMARY KEY, "
               "username TEXT, "
@@ -33,6 +38,7 @@ void DatabaseManager::initializeDatabase() {
               "role TEXT)");
 
     // 创建快递表
+    LogManager::getInstance().info("Creating packages table");
     query.exec("CREATE TABLE IF NOT EXISTS packages ("
               "id INTEGER PRIMARY KEY, "
               "phone_number TEXT, "
@@ -44,32 +50,38 @@ void DatabaseManager::initializeDatabase() {
               "pickup_time DATETIME)");
 
     // 创建储物柜表
+    LogManager::getInstance().info("Creating lockers table");
     query.exec("CREATE TABLE IF NOT EXISTS lockers ("
               "id INTEGER PRIMARY KEY, "
               "status TEXT DEFAULT 'empty', "
               "package_id INTEGER)");
 
     // 插入默认用户数据
+    LogManager::getInstance().info("Inserting default users");
     insertUser("11111111111", "admin", "admin");
     insertUser("12222222222", "user", "deliver");
     insertUser("13333333333", "guest", "user");
 
     // 初始化储物柜
+    LogManager::getInstance().info("Initializing lockers");
     query.exec("CREATE TABLE IF NOT EXISTS lockers ("
               "id INTEGER PRIMARY KEY, "
               "status TEXT DEFAULT 'empty', "
               "package_id INTEGER)");
 
     // 插入初始储物柜数据
+    LogManager::getInstance().info("Inserting initial lockers");
     for(int i = 1; i <= 10; i++) {
-        query.prepare("INSERT OR IGNORE INTO lockers (id, status) VALUES (?, 'empty')");
+        query.prepare("INSERT OR IGNORE INTO lockers (id, status) VALUES (?, '空闲')");
         query.addBindValue(i);
         if (!query.exec()) {
+            LogManager::getInstance().error("Failed to initialize locker" + QString::number(i) + ":" + query.lastError().text());
             qDebug() << "Failed to initialize locker" << i << ":" << query.lastError().text();
         }
     }
 
     // 创建评价表
+    LogManager::getInstance().info("Creating ratings table");
     query.exec("CREATE TABLE IF NOT EXISTS ratings ("
               "id INTEGER PRIMARY KEY, "
               "score INTEGER, "
@@ -80,8 +92,10 @@ void DatabaseManager::initializeDatabase() {
 
 bool DatabaseManager::insertUser(const QString& username, const QString& password, const QString& role) {
     // Check if the username is an 11-digit phone number
+    LogManager::getInstance().info("Inserting user:" + username + ":" + password + ":" + role);
     QRegularExpression phoneRegex("^\\d{11}$");
     if (!phoneRegex.match(username).hasMatch()) {
+        LogManager::getInstance().error("Username must be an 11-digit phone number.");
         qDebug() << "Username must be an 11-digit phone number.";
         return false;
     }
@@ -94,10 +108,11 @@ bool DatabaseManager::insertUser(const QString& username, const QString& passwor
     query.addBindValue(password);
     query.addBindValue(role);
     if (!query.exec()) {
+        LogManager::getInstance().error("Failed to insert user:" + query.lastError().text());
         qDebug() << "Failed to insert user:" << query.lastError().text();
         return false;
     }
-    qInfo() << "Inserting user:" << username << ":" << password;
+    LogManager::getInstance().info("Inserting user:" + username + ":" + password);
     return true;
 }
 
@@ -108,8 +123,10 @@ bool DatabaseManager::verifyCredentials(const QString& username, const QString& 
     query.addBindValue(password);
     query.addBindValue(role);
     if (query.exec() && query.next()) {
+        LogManager::getInstance().info("Verifying credentials:" + username + ":" + password + ":" + role);
         return true;
     }
+    LogManager::getInstance().error("Failed to verify credentials:" + username + ":" + password + ":" + role);
     return false;
 }
 
@@ -121,8 +138,9 @@ bool DatabaseManager::userExists(const QString& username) {
 
     if (query.exec() && query.next()) {
         return query.value(0).toInt() > 0;
+        LogManager::getInstance().info("User exists:" + username);
     }
-
+    LogManager::getInstance().error("User does not exist:" + username);
     return false;
 }
 
@@ -138,7 +156,13 @@ bool DatabaseManager::createPackage(const QString& phoneNumber, const QString& c
     query.addBindValue(lockerId);
     query.addBindValue(courierAccount);
     
-    return query.exec();
+    bool success = query.exec();
+    if (success) {
+        LogManager::getInstance().info("Package created successfully");
+    } else {
+        LogManager::getInstance().error("Failed to create package:" + query.lastError().text());
+    }
+    return success;
 }
 
 QString DatabaseManager::generatePickupCode(const QString& phoneNumber) {
@@ -175,6 +199,8 @@ bool DatabaseManager::verifyPickupCode(const QString& pickupCode) {
 
 QString DatabaseManager::getPackagesByPhone(const QString& phoneNumber) {
     QSqlQuery query;
+
+    LogManager::getInstance().info("Getting packages by phone number:" + phoneNumber);
     query.prepare("SELECT p.*, l.id as locker_number "
                  "FROM packages p "
                  "LEFT JOIN lockers l ON p.locker_id = l.id "
@@ -184,6 +210,7 @@ QString DatabaseManager::getPackagesByPhone(const QString& phoneNumber) {
     
     QStringList results;
     if (query.exec()) {
+        LogManager::getInstance().info("Packages fetched successfully");
         while (query.next()) {
             QString status = query.value("status").toString();
             QString pickupCode = query.value("pickup_code").toString();
@@ -196,6 +223,8 @@ QString DatabaseManager::getPackagesByPhone(const QString& phoneNumber) {
                          .arg(status)
                          .arg(createdTime));
         }
+    } else {
+        LogManager::getInstance().error("Failed to fetch packages:" + query.lastError().text());
     }
     return results.join("\n");
 }
@@ -205,12 +234,19 @@ bool DatabaseManager::updatePackageStatus(const QString& packageId, const QStrin
     query.prepare("UPDATE packages SET status = ? WHERE id = ?");
     query.addBindValue(status);
     query.addBindValue(packageId);
-    return query.exec();
+    bool success = query.exec();
+    if (success) {
+        LogManager::getInstance().info("Package status updated successfully");
+    } else {
+        LogManager::getInstance().error("Failed to update package status:" + query.lastError().text());
+    }
+    return success;
 }
 
 // 新增：查询超时包裹
 QStringList DatabaseManager::getOverduePackages() {
     QSqlQuery query;
+    LogManager::getInstance().info("Getting overdue packages");
     query.exec("SELECT p.*, l.id as locker_number "
               "FROM packages p "
               "LEFT JOIN lockers l ON p.locker_id = l.id "
@@ -219,6 +255,7 @@ QStringList DatabaseManager::getOverduePackages() {
     
     QStringList results;
     while (query.next()) {
+        LogManager::getInstance().info("Overdue package found");
         QString phoneNumber = query.value("phone_number").toString();
         QString lockerNumber = query.value("locker_number").toString();
         QString createdTime = query.value("created_time").toString();
@@ -228,6 +265,7 @@ QStringList DatabaseManager::getOverduePackages() {
                      .arg(lockerNumber)
                      .arg(createdTime));
     }
+    LogManager::getInstance().info("Overdue packages fetched successfully");
     return results;
 }
 
@@ -238,9 +276,10 @@ bool DatabaseManager::submitRating(int score, const QString& comment) {
     query.addBindValue(comment);
     
     if (!query.exec()) {
-        qDebug() << "Failed to submit rating:" << query.lastError().text();
+        LogManager::getInstance().error("Failed to submit rating:" + query.lastError().text());
         return false;
     }
+    LogManager::getInstance().info("Rating submitted successfully");
     return true;
 }
 
@@ -250,7 +289,7 @@ QVariantList DatabaseManager::getRatings() {
     
     if (!query.exec("SELECT score, comment, datetime(date, 'localtime') as local_date "
                    "FROM ratings ORDER BY date DESC")) {
-        qDebug() << "Failed to get ratings:" << query.lastError().text();
+        LogManager::getInstance().error("Failed to get ratings:" + query.lastError().text());
         return ratings;
     }
     
@@ -262,5 +301,6 @@ QVariantList DatabaseManager::getRatings() {
         ratings.append(rating);
     }
     
+    LogManager::getInstance().info("Ratings fetched successfully");
     return ratings;
 }

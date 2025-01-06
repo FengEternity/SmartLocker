@@ -11,6 +11,11 @@ class PackageManager : public QObject {
     Q_OBJECT
 
 public:
+    // 储物柜状态常量
+    static const QString STATUS_EMPTY;
+    static const QString STATUS_OCCUPIED;
+    static const QString STATUS_MAINTENANCE;
+    
     explicit PackageManager(DatabaseManager* db, QObject *parent = nullptr);
 
     // 快递员操作

@@ -1,13 +1,19 @@
 // PackageManager.cpp
 #include "PackageManager.h"
+#include "LogManager.h"
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QDateTime>
 #include <QDebug>
 
+const QString PackageManager::STATUS_EMPTY = "空闲";
+const QString PackageManager::STATUS_OCCUPIED = "使用中";
+const QString PackageManager::STATUS_MAINTENANCE = "维修中";
+
 PackageManager::PackageManager(DatabaseManager* db, QObject *parent)
     : QObject(parent), m_db(db)
 {
+    LogManager::getInstance().info("PackageManager initialized");
 }
 
 QVariantMap PackageManager::depositPackage(const QString& phoneNumber, int lockerId, 
@@ -38,10 +44,12 @@ QVariantMap PackageManager::depositPackage(const QString& phoneNumber, int locke
             result["success"] = true;
             result["pickupCode"] = query.value("pickup_code").toString();
             result["message"] = "快递存放成功";
+            LogManager::getInstance().info("Package deposited successfully");
         }
     } else {
         result["success"] = false;
         result["message"] = "存放失败，请重试";
+        LogManager::getInstance().error("Package deposit failed");
     }
     
     return result;
@@ -55,8 +63,9 @@ QVariantMap PackageManager::pickupPackage(const QString& pickupCode)
     query.prepare("SELECT id, locker_id FROM packages WHERE pickup_code = ? "
                  "AND status = 'pending'");
     query.addBindValue(pickupCode);
-    
+    LogManager::getInstance().info("Querying package by pickup code:" + pickupCode);
     if (query.exec() && query.next()) {
+        LogManager::getInstance().info("Package found");
         int packageId = query.value("id").toInt();
         int lockerId = query.value("locker_id").toInt();
         
@@ -67,6 +76,7 @@ QVariantMap PackageManager::pickupPackage(const QString& pickupCode)
         updateQuery.addBindValue(packageId);
         
         if (updateQuery.exec()) {
+            LogManager::getInstance().info("Package status updated to picked_up");
             // 更新储物柜状态
             updateLockerStatus(lockerId, "empty");
             
@@ -74,10 +84,12 @@ QVariantMap PackageManager::pickupPackage(const QString& pickupCode)
             result["lockerNumber"] = lockerId;
             result["message"] = "取件成功";
         } else {
+            LogManager::getInstance().error("Failed to update package status to picked_up");
             result["success"] = false;
             result["message"] = "取件失败，请重试";
         }
     } else {
+        LogManager::getInstance().error("Package not found or already picked up");
         result["success"] = false;
         result["message"] = "取件码无效或已使用";
     }
@@ -92,13 +104,16 @@ QStringList PackageManager::getPickupCodes(const QString& phoneNumber)
     query.prepare("SELECT pickup_code, locker_id FROM packages "
                  "WHERE phone_number = ? AND status = 'pending'");
     query.addBindValue(phoneNumber);
-    
+    LogManager::getInstance().info("Querying pickup codes for phone number:" + phoneNumber);
     if (query.exec()) {
         while (query.next()) {
             QString code = query.value("pickup_code").toString();
             int lockerId = query.value("locker_id").toInt();
             codes.append(QString("取件码: %1 (柜号: %2)").arg(code).arg(lockerId));
+            LogManager::getInstance().info("Pickup code found:" + code + " (Locker ID: " + QString::number(lockerId) + ")");
         }
+    } else {
+        LogManager::getInstance().error("Failed to query pickup codes:" + query.lastError().text());
     }
     
     return codes;
@@ -109,7 +124,7 @@ QString PackageManager::getLockerStatus(int lockerId)
     QSqlQuery query(m_db->getDatabase());
     query.prepare("SELECT status FROM lockers WHERE id = ?");
     query.addBindValue(lockerId);
-    
+    LogManager::getInstance().info("Querying locker status for locker ID:" + QString::number(lockerId));
     if (query.exec() && query.next()) {
         return query.value("status").toString();
     }
@@ -122,16 +137,19 @@ bool PackageManager::updateLockerPackage(int lockerId, int packageId)
     query.prepare("UPDATE lockers SET package_id = ? WHERE id = ?");
     query.addBindValue(packageId);
     query.addBindValue(lockerId);
+    LogManager::getInstance().info("Updating locker package for locker ID:" + QString::number(lockerId) + " with package ID:" + QString::number(packageId));
     return query.exec();
 }
 
 QString PackageManager::queryPackagesByPhone(const QString& phoneNumber)
 {
+    LogManager::getInstance().info("Querying packages by phone number:" + phoneNumber);
     return m_db->getPackagesByPhone(phoneNumber);
 }
 
 QStringList PackageManager::getOverduePackages()
 {
+    LogManager::getInstance().info("Querying overdue packages");
     return m_db->getOverduePackages();
 }
 
@@ -140,7 +158,7 @@ bool PackageManager::isLockerAvailable(int lockerId)
     QSqlQuery query(m_db->getDatabase());
     query.prepare("SELECT status FROM lockers WHERE id = ?");
     query.addBindValue(lockerId);
-    
+    LogManager::getInstance().info("Checking locker availability for locker ID:" + QString::number(lockerId));
     if (query.exec() && query.next()) {
         return query.value("status").toString() == "empty";
     }
@@ -150,16 +168,31 @@ bool PackageManager::isLockerAvailable(int lockerId)
 QStringList PackageManager::getAvailableLockers()
 {
     QSqlQuery query(m_db->getDatabase());
-    // 修改查询，获取所有空闲的储物柜
-    query.prepare("SELECT id FROM lockers WHERE status = 'empty' ORDER BY id");
+    
+    // 首先检查所有储物柜
+    qDebug() << "检查所有储物柜状态...";
+    QSqlQuery checkQuery(m_db->getDatabase());
+    checkQuery.exec("SELECT id, status FROM lockers");
+    while (checkQuery.next()) {
+        qDebug() << "储物柜" << checkQuery.value("id").toInt() 
+                << "状态:" << checkQuery.value("status").toString();
+    }
+    
+    query.prepare("SELECT id FROM lockers WHERE status = '空闲' ORDER BY id");
+    qDebug() << "正在查询可用储物柜...";
+    LogManager::getInstance().info("Querying available lockers");
     
     QStringList lockers;
     if (query.exec()) {
         while (query.next()) {
-            lockers.append(QString::number(query.value("id").toInt()));
+            QString lockerId = QString::number(query.value("id").toInt());
+            lockers.append(lockerId);
+            qDebug() << "找到可用储物柜:" << lockerId;
         }
+        qDebug() << "可用储物柜总数:" << lockers.size();
     } else {
-        qDebug() << "Failed to get available lockers:" << query.lastError().text();
+        qDebug() << "查询储物柜失败:" << query.lastError().text();
+        LogManager::getInstance().error("Failed to get available lockers:" + query.lastError().text());
     }
     
     return lockers;
@@ -171,13 +204,16 @@ bool PackageManager::updateLockerStatus(int lockerId, const QString& status)
     query.prepare("UPDATE lockers SET status = ? WHERE id = ?");
     query.addBindValue(status);
     query.addBindValue(lockerId);
+    LogManager::getInstance().info("Updating locker status for locker ID:" + QString::number(lockerId) + " to:" + status);
     return query.exec();
 }
 
 bool PackageManager::submitRating(int score, const QString& comment) {
+    LogManager::getInstance().info("Submitting rating with score:" + QString::number(score) + " and comment:" + comment);
     return m_db->submitRating(score, comment);
 }
 
 QVariantList PackageManager::getRatings() {
+    LogManager::getInstance().info("Getting ratings");
     return m_db->getRatings();
 }
