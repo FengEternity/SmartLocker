@@ -20,6 +20,10 @@ public:
     QString getPackagesByPhone(const QString& phoneNumber);
     QStringList getOverduePackages();
 
+    // 评价相关方法
+    bool submitRating(int score, const QString& comment);
+    QVariantList getRatings();
+
     QSqlDatabase& getDatabase() { return db; }
 
 private:

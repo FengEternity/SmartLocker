@@ -173,3 +173,11 @@ bool PackageManager::updateLockerStatus(int lockerId, const QString& status)
     query.addBindValue(lockerId);
     return query.exec();
 }
+
+bool PackageManager::submitRating(int score, const QString& comment) {
+    return m_db->submitRating(score, comment);
+}
+
+QVariantList PackageManager::getRatings() {
+    return m_db->getRatings();
+}

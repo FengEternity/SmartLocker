@@ -307,7 +307,7 @@ ApplicationWindow {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             clip: true
-                            model: ListModel { 
+                            model: ListModel {
                                 id: overdueListModel
                                 // 初始化时加载数据
                                 Component.onCompleted: {
@@ -342,6 +342,58 @@ ApplicationWindow {
                                 font.pixelSize: 16
                                 color: "#666666"
                                 visible: overdueListModel.count === 0
+                            }
+                        }
+                    }
+                }
+
+                // 评价列表区域
+                Pane {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: parent.height / 2
+                    Material.elevation: 2
+                    padding: 10
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        spacing: 10
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 10
+
+                            Label {
+                                text: "用户评价"
+                                font.pixelSize: 18
+                                font.bold: true
+                                Layout.fillWidth: true  // 让标签填充剩余空间
+                                horizontalAlignment: Qt.AlignLeft
+                            }
+
+                            Button {
+                                text: "刷新"
+                                Layout.alignment: Qt.AlignRight  // 将按钮对齐到右侧
+                                onClicked: {
+                                    var ratings = packageManager.getRatings()
+                                    ratingsList.text = formatRatings(ratings)
+                                }
+                            }
+                        }
+
+                        ScrollView {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            clip: true
+
+                            TextArea {
+                                id: ratingsList
+                                readOnly: true
+                                wrapMode: Text.WordWrap
+                                font.pixelSize: 14
+                                Component.onCompleted: {
+                                    var ratings = packageManager.getRatings()
+                                    text = formatRatings(ratings)
+                                }
                             }
                         }
                     }
@@ -456,6 +508,106 @@ ApplicationWindow {
                         queryDialog.open()
                     }
                 }
+
+                // 添加一个分隔线
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 1
+                    color: "#e0e0e0"
+                }
+
+                // 添加评价按钮
+                Button {
+                    text: "评价服务"
+                    Layout.fillWidth: true
+                    Material.background: Material.accent
+                    highlighted: true
+                    onClicked: ratingDialog.open()
+                }
+
+                // 添加评价对话框
+                Dialog {
+                    id: ratingDialog
+                    title: "服务评价"
+                    modal: true
+                    standardButtons: Dialog.Ok | Dialog.Cancel
+                    x: (parent.width - width) / 2
+                    y: (parent.height - height) / 2
+                    width: 300
+                    height: 300
+
+                    ColumnLayout {
+                        width: parent.width
+                        spacing: 20
+                        anchors.margins: 20
+
+                        Label {
+                            text: "请为我们的服务打分"
+                            font.pixelSize: 14
+                            Layout.fillWidth: true
+                        }
+
+                        ComboBox {
+                            id: ratingScore
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 40
+                            model: ["5分 非常满意", "4分 满意", "3分 一般", "2分 不满意", "1分 非常不满意"]
+                        }
+
+                        TextField {
+                            id: ratingComment
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 80
+                            placeholderText: "请输入评价内容（选填）"
+                            wrapMode: TextInput.Wrap
+                            // 允许多行输入
+                            verticalAlignment: TextInput.AlignTop
+                        }
+                    }
+
+                    onAccepted: {
+                        var score = 5 - ratingScore.currentIndex
+                        if (packageManager.submitRating(score, ratingComment.text)) {
+                            // 评价成功
+                            successDialog.message = "感谢您的评价！"
+                            successDialog.open()
+                            // 重置输入
+                            ratingComment.text = ""
+                            ratingScore.currentIndex = 0
+                        } else {
+                            // 评价失败
+                            errorDialog.message = "评价提交失败，请稍后重试"
+                            errorDialog.open()
+                        }
+                    }
+                }
+
+                // 添加成功提示对话框（如果还没有的话）
+                Dialog {
+                    id: successDialog
+                    property string message: ""
+                    title: "提示"
+                    modal: true
+                    standardButtons: Dialog.Ok
+                    x: (parent.width - width) / 2
+                    y: (parent.height - height) / 2
+                    width: 300
+                    height: 150
+
+                    contentItem: ColumnLayout {
+                        spacing: 10
+
+                        Label {
+                            text: successDialog.message
+                            wrapMode: Text.WordWrap
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            font.pixelSize: 16
+                        }
+                    }
+                }
             }
 
             Dialog {
@@ -509,5 +661,21 @@ ApplicationWindow {
                 }
             }
         }
+    }
+
+    function formatRatings(ratings) {
+        if (!ratings || ratings.length === 0) {
+            return "暂无评价"
+        }
+        
+        var result = ""
+        for (var i = 0; i < ratings.length; i++) {
+            var rating = ratings[i]
+            result += "评分：" + rating.score + " 分\n"
+            result += "时间：" + rating.date + "\n"
+            result += "评价：" + (rating.comment || "无评价内容") + "\n"
+            result += "----------------------------------------\n"
+        }
+        return result
     }
 }

@@ -23,12 +23,14 @@ set(SOURCES
         src/LockerManager.cpp
         src/PackageManager.cpp
         src/LoginManager.cpp
+        src/LogManager.cpp
 
         src/DatabaseManager.h
         src/UserManager.h
         src/LockerManager.h
         src/PackageManager.h
         src/LoginManager.h
+        src/LogManager.h
 )
 
 # 添加资源文件

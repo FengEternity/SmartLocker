@@ -27,6 +27,8 @@ public:
     Q_INVOKABLE bool isLockerAvailable(int lockerId);
     Q_INVOKABLE QStringList getAvailableLockers();
     Q_INVOKABLE bool updateLockerStatus(int lockerId, const QString& status);
+    Q_INVOKABLE bool submitRating(int score, const QString& comment);
+    Q_INVOKABLE QVariantList getRatings();
 
 private:
     DatabaseManager* m_db;

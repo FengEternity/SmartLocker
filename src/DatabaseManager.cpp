@@ -68,6 +68,13 @@ void DatabaseManager::initializeDatabase() {
             qDebug() << "Failed to initialize locker" << i << ":" << query.lastError().text();
         }
     }
+
+    // 创建评价表
+    query.exec("CREATE TABLE IF NOT EXISTS ratings ("
+              "id INTEGER PRIMARY KEY, "
+              "score INTEGER, "
+              "comment TEXT, "
+              "date DATETIME DEFAULT CURRENT_TIMESTAMP)");
 }
 
 
@@ -222,4 +229,38 @@ QStringList DatabaseManager::getOverduePackages() {
                      .arg(createdTime));
     }
     return results;
+}
+
+bool DatabaseManager::submitRating(int score, const QString& comment) {
+    QSqlQuery query(db);
+    query.prepare("INSERT INTO ratings (score, comment) VALUES (?, ?)");
+    query.addBindValue(score);
+    query.addBindValue(comment);
+    
+    if (!query.exec()) {
+        qDebug() << "Failed to submit rating:" << query.lastError().text();
+        return false;
+    }
+    return true;
+}
+
+QVariantList DatabaseManager::getRatings() {
+    QVariantList ratings;
+    QSqlQuery query(db);
+    
+    if (!query.exec("SELECT score, comment, datetime(date, 'localtime') as local_date "
+                   "FROM ratings ORDER BY date DESC")) {
+        qDebug() << "Failed to get ratings:" << query.lastError().text();
+        return ratings;
+    }
+    
+    while (query.next()) {
+        QVariantMap rating;
+        rating["score"] = query.value("score").toInt();
+        rating["comment"] = query.value("comment").toString();
+        rating["date"] = query.value("local_date").toString();
+        ratings.append(rating);
+    }
+    
+    return ratings;
 }
