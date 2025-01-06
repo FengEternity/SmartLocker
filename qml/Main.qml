@@ -16,8 +16,8 @@ ApplicationWindow {
     Material.theme: settingsManager.isDarkMode ? Material.Dark : Material.Light
     
     // 定义主题相关的颜色
-    readonly property color primaryColor: settingsManager.isDarkMode ? "#ffb499" : "#564032"
-    readonly property color accentColor: settingsManager.isDarkMode ? "#4fc3f7" : "#0e2c39"
+    readonly property color primaryColor: settingsManager.isDarkMode ? "#ffb499" : "#ffb499"
+    readonly property color accentColor: settingsManager.isDarkMode ? "#4fc3f7" : "#4fc3f7"
     
     // 语言资源加载器
     property var i18n: null
@@ -361,10 +361,15 @@ ApplicationWindow {
                         Material.background: accentColor
                         highlighted: true
                         onClicked: {
-                            overdueListModel.clear()
+                            console.log("点击刷新超时快递按钮")
                             var packages = packageManager.getOverduePackages()
-                            for (var i = 0; i < packages.length; i++) {
-                                overdueListModel.append({"text": packages[i]})
+                            console.log("刷新获取到的超时快递:", JSON.stringify(packages))
+                            if (packages && packages.length > 0) {
+                                overdueList.text = packages.join("\n\n")
+                                console.log("刷新完成")
+                            } else {
+                                overdueList.text = i18n ? i18n.noOverduePackages : "无超时快递"
+                                console.log("刷新后没有超时快递")
                             }
                         }
                     }
@@ -386,45 +391,30 @@ ApplicationWindow {
                             font.bold: true
                         }
 
-                        ListView {
+                        ScrollView {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             clip: true
-                            model: ListModel {
-                                id: overdueListModel
+
+                            TextArea {
+                                id: overdueList
+                                readOnly: true
+                                wrapMode: Text.WordWrap
+                                font.pixelSize: 14
+                                
                                 // 初始化时加载数据
                                 Component.onCompleted: {
+                                    console.log("开始加载超时快递列表...")
                                     var packages = packageManager.getOverduePackages()
-                                    for (var i = 0; i < packages.length; i++) {
-                                        append({"text": packages[i]})
+                                    console.log("获取到的超时快递:", JSON.stringify(packages))
+                                    if (packages && packages.length > 0) {
+                                        text = packages.join("\n\n")  // 使用两个换行符分隔每条记录
+                                        console.log("超时快递列表加载完成")
+                                    } else {
+                                        text = i18n ? i18n.noOverduePackages : "无超时快递"
+                                        console.log("没有超时快递")
                                     }
                                 }
-                            }
-
-                            delegate: ItemDelegate {
-                                width: parent.width
-                                height: 60
-
-                                RowLayout {
-                                    anchors.fill: parent
-                                    anchors.margins: 10
-                                    spacing: 10
-
-                                    Label {
-                                        text: model.text
-                                        Layout.fillWidth: true
-                                        wrapMode: Text.WordWrap
-                                    }
-                                }
-                            }
-
-                            // 当列表为空时显示的占位符
-                            Label {
-                                anchors.centerIn: parent
-                                text: "无超时快递"
-                                font.pixelSize: 16
-                                color: "#666666"
-                                visible: overdueListModel.count === 0
                             }
                         }
                     }
@@ -540,10 +530,10 @@ ApplicationWindow {
                         statusSelector.currentText.toLowerCase()
                     )
                     // 更新列表
-                    overdueListModel.clear()
+                    overdueList.clear()
                     var packages = packageManager.getOverduePackages()
                     for (var i = 0; i < packages.length; i++) {
-                        overdueListModel.append({"text": packages[i]})
+                        overdueList.append({"text": packages[i]})
                     }
                 }
             }
