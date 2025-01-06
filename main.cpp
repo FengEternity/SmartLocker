@@ -6,6 +6,7 @@
 #include "src/UserManager.h"
 #include "src/PackageManager.h"
 #include "src/LogManager.h"
+#include "src/SettingsManager.h"
 
 int main(int argc, char *argv[])
 {
@@ -30,6 +31,7 @@ int main(int argc, char *argv[])
     LoginManager loginManager(dbPath);
     UserManager userManager(dbPath);
     PackageManager packageManager(&dbManager);
+    SettingsManager settingsManager;
 
     // 初始化QML引擎
     logManager.info("Initializing QML engine...");
@@ -45,6 +47,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("userManager", &userManager);
     engine.rootContext()->setContextProperty("loginManager", &loginManager);
     engine.rootContext()->setContextProperty("packageManager", &packageManager);
+    engine.rootContext()->setContextProperty("settingsManager", &settingsManager);
 
     // 加载主QML文件
     logManager.info("Loading main QML file...");

@@ -1,17 +1,25 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import QtQuick.Layouts 1.15
 
 Item {
     signal backToLogin()
 
     Column {
-        spacing: 10
+        spacing: 20
         anchors.centerIn: parent
 
         ComboBox {
+            spacing: 20
             id: statusComboBox
             width: 210
-            model: ["快递员", "管理员", "取件人"]
+            model: [
+                { text: i18n ? i18n.roleCourier : "快递员", value: "deliver" },
+                { text: i18n ? i18n.roleAdmin : "管理员", value: "user" },
+                { text: i18n ? i18n.roleUser : "取件人", value: "admin" }
+            ]
+            textRole: "text"
+            valueRole: "value"
 
             // 角色映射
             property var roleMap: {
@@ -19,7 +27,7 @@ Item {
                 "管理员": "admin",
                 "取件人": "user"
             }
-
+            
             function getSelectedRole() {
                 return roleMap[currentText];
             }
@@ -28,7 +36,7 @@ Item {
         TextField {
             id: newUsernameInput
             width: 210
-            placeholderText: "新账号"
+            placeholderText: i18n ? i18n.usernamePlaceholder : "新账号"
             onTextChanged: {
                 if (!/^\d{11}$/.test(newUsernameInput.text)) {
                     newUsernameInput.color = "red"
@@ -41,7 +49,7 @@ Item {
         TextField {
             id: newPasswordInput
             width: 210
-            placeholderText: "新密码"
+            placeholderText: i18n ? i18n.passwordPlaceholder : "新密码"
             echoMode: TextInput.Password
         }
 
@@ -49,7 +57,7 @@ Item {
             spacing: 10
 
             Button {
-                text: "注册"
+                text: i18n ? i18n.register : "注册"
                 width: 100
                 onClicked: {
                     var username = newUsernameInput.text;
@@ -71,7 +79,6 @@ Item {
                         registerSucessDialog.open()
                         newPasswordInput.text = ""
                         newUsernameInput.text = ""
-                        // backToLogin();
                     } else {
                         console.log("Registration failed");
                         registerFailedDialog.open()
@@ -80,7 +87,7 @@ Item {
             }
 
             Button {
-                text: "返回"
+                text: i18n ? i18n.cancel : "返回"
                 width: 100
                 onClicked: {
                     backToLogin()
@@ -95,7 +102,6 @@ Item {
         function onRegisterTrue() {
             console.log("Registration successful")
             registerSucessDialog.open()
-            // backToLogin()
         }
         
         function onRegisterFalse() {
@@ -105,12 +111,12 @@ Item {
 
     Dialog {
         id: registerFailedDialog
-        title: "注册失败"
+        title: i18n ? i18n.registerFailed : "注册失败"
         width: 256
         height: 128
         anchors.centerIn: parent
         contentItem: Text {
-            text: "注册失败，请重试！"
+            text: i18n ? i18n.registerFailed : "注册失败，请重试！"
             color: "white"
         }
         standardButtons: Dialog.Ok
@@ -119,7 +125,7 @@ Item {
 
     Dialog {
         id: registerSucessDialog
-        title: "注册成功！"
+        title: i18n ? i18n.registerSuccess : "注册成功！"
         width: 256
         height: 128
         anchors.centerIn: parent

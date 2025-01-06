@@ -6,14 +6,55 @@ import QtQuick.Layouts 1.15
 pragma ComponentBehavior: Bound
 
 ApplicationWindow {
+    id: window
     visible: true
     width: 800
     height: 600
-    title: "智能快递柜系统"
+    title: i18n ? i18n.appTitle : ""
 
-    Material.theme: Material.Light
+    // 主题设置
+    Material.theme: settingsManager.isDarkMode ? Material.Dark : Material.Light
     Material.primary: "#f6772a"
     Material.accent: "#35afe1"
+
+    // 语言资源加载器
+    property var i18n: null
+    
+    // 设置菜单
+    menuBar: MenuBar {
+        Menu {
+            // 使用三元运算符检查 i18n 是否存在
+            title: i18n ? i18n.settings : "设置"
+            MenuItem {
+                text: i18n ? (settingsManager.isDarkMode ? i18n.switchToLight : i18n.switchToDark) 
+                          : (settingsManager.isDarkMode ? "切换到浅色主题" : "切换到深色主题")
+                onTriggered: settingsManager.isDarkMode = !settingsManager.isDarkMode
+            }
+            MenuItem {
+                text: i18n ? (settingsManager.language === "zh_CN" ? i18n.switchToEnglish : i18n.switchToChinese)
+                          : (settingsManager.language === "zh_CN" ? "Switch to English" : "切换到中文")
+                onTriggered: {
+                    settingsManager.language = settingsManager.language === "zh_CN" ? "en_US" : "zh_CN"
+                    loadTranslations()
+                }
+            }
+        }
+    }
+
+    Component.onCompleted: {
+        loadTranslations()
+    }
+
+    function loadTranslations() {
+        console.log("Loading translations for language:", settingsManager.language)
+        var component = Qt.createComponent("qrc:/translations/" + settingsManager.language + ".qml")
+        if (component.status === Component.Ready) {
+            i18n = component.createObject(window)
+            console.log("Translations loaded successfully")
+        } else if (component.status === Component.Error) {
+            console.error("Error loading translations:", component.errorString())
+        }
+    }
 
     StackView {
         id: stackView
@@ -39,13 +80,13 @@ ApplicationWindow {
                 RowLayout {
                     anchors.fill: parent
                     Label {
-                        text: "快递员主页"
+                        text: i18n.courierHome
                         font.pixelSize: 20
                         Layout.fillWidth: true
                         horizontalAlignment: Qt.AlignHCenter
                     }
                     ToolButton {
-                        text: qsTr("退出")
+                        text: i18n.logout
                         onClicked: stackView.pop()
                     }
                 }
@@ -259,13 +300,13 @@ ApplicationWindow {
                 RowLayout {
                     anchors.fill: parent
                     Label {
-                        text: "管理员主页"
+                        text: i18n.adminHome
                         font.pixelSize: 20
                         Layout.fillWidth: true
                         horizontalAlignment: Qt.AlignHCenter
                     }
                     ToolButton {
-                        text: qsTr("退出")
+                        text: i18n.logout
                         onClicked: stackView.pop()
                     }
                 }
@@ -488,13 +529,13 @@ ApplicationWindow {
                 RowLayout {
                     anchors.fill: parent
                     Label {
-                        text: "取件人主页"
+                        text: i18n.userHome
                         font.pixelSize: 20
                         Layout.fillWidth: true
                         horizontalAlignment: Qt.AlignHCenter
                     }
                     ToolButton {
-                        text: qsTr("退出")
+                        text: i18n.logout
                         onClicked: stackView.pop()
                     }
                 }

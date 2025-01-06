@@ -6,5 +6,7 @@
         <file>CourierPage.qml</file>
         <file>AdminPage.qml</file>
         <file>GuestPage.qml</file>
+        <file>../translations/zh_CN.qml</file>
+        <file>../translations/en_US.qml</file>
     </qresource>
 </RCC>

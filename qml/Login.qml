@@ -18,38 +18,37 @@ Item {
     }
 
     Column {
-        spacing: 10
+        spacing: 20
         anchors.centerIn: parent
         visible: pageLoader.status === Loader.Null
 
         ComboBox {
-            id: roleComboBox
+            id: roleSelector
             width: 210
-            model: ["快递员", "管理员", "取件人"]
-
-            // 映射角色
-            property var roleMap: {
-                "快递员": "deliver",
-                "管理员": "admin",
-                "取件人": "user"
-            }
-
+            model: [
+                { text: i18n ? i18n.roleCourier : "快递员", value: "deliver" },
+                { text: i18n ? i18n.roleAdmin : "管理员", value: "admin" },
+                { text: i18n ? i18n.roleUser : "取件人", value: "user" }
+            ]
+            textRole: "text"
+            valueRole: "value"
+            
             function getSelectedRole() {
-                return roleMap[currentText];
+                return model[currentIndex].value
             }
         }
 
         TextField {
             id: usernameInput
             width: 210
-            placeholderText: "手机号"
+            placeholderText: i18n ? i18n.usernamePlaceholder : "请输入手机号"
             validator: RegularExpressionValidator { regularExpression: /^1[3-9]\d{9}$/ }
         }
 
         TextField {
             id: passwordInput
             width: 210
-            placeholderText: "密码"
+            placeholderText: i18n ? i18n.passwordPlaceholder : "请输入密码"
             echoMode: TextInput.Password
         }
 
@@ -57,21 +56,21 @@ Item {
             spacing: 10
 
             Button {
-                text: "登录"
+                text: i18n ? i18n.login : "登录"
                 width: 100
                 enabled: usernameInput.acceptableInput && passwordInput.text.length > 0
                 onClicked: {
-                    if (loginManager.verifyCredentials(usernameInput.text, passwordInput.text, roleComboBox.getSelectedRole())) {
-                        loginSuccessful(roleComboBox.getSelectedRole())
+                    if (loginManager.verifyCredentials(usernameInput.text, passwordInput.text, roleSelector.getSelectedRole())) {
+                        loginSuccessful(roleSelector.getSelectedRole())
                     } else {
-                        errorDialog.message = "用户名或密码错误，或角色选择不匹配"
+                        errorDialog.message = i18n ? i18n.loginFailed : "用户名或密码错误，或角色选择不匹配"
                         errorDialog.open()
                     }
                 }
             }
 
             Button {
-                text: "注册"
+                text: i18n ? i18n.register : "注册"
                 width: 100
                 onClicked: {
                     pageLoader.source = "Register.qml"
@@ -82,7 +81,7 @@ Item {
 
     Dialog {
         id: errorDialog
-        title: "登录失败"
+        title: i18n ? i18n.error : "错误"
         modal: true
         standardButtons: Dialog.Ok
         x: (parent.width - width) / 2
@@ -105,6 +104,6 @@ Item {
             }
         }
 
-        property string message: "账号或密码错误，请重试！"
+        property string message: i18n ? i18n.loginFailed : "账号或密码错误，请重试！"
     }
 }

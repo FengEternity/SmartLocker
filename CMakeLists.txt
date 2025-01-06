@@ -24,6 +24,7 @@ set(SOURCES
         src/PackageManager.cpp
         src/LoginManager.cpp
         src/LogManager.cpp
+        src/SettingsManager.cpp
 
         src/DatabaseManager.h
         src/UserManager.h
@@ -31,6 +32,7 @@ set(SOURCES
         src/PackageManager.h
         src/LoginManager.h
         src/LogManager.h
+        src/SettingsManager.h
 )
 
 # 添加资源文件
